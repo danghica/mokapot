@@ -1,0 +1,106 @@
+// Mokapot needs permissions to do networking, and the program that uses it
+// needs permissions to ask it to do networking.
+grant {
+    permission java.net.SocketPermission "127.0.0.1", "connect,resolve,accept,listen";
+    permission java.net.SocketPermission "localhost", "connect,resolve,accept,listen";
+};
+
+// Permissions needed for Mokapot itself.
+grant codebase "file:${mokapot.jar}" {
+    // Mokapot needs permission to call into Objenesis.
+    permission java.util.PropertyPermission "java.runtime.version", "read";
+    permission java.util.PropertyPermission "java.vm.info", "read";
+    permission java.util.PropertyPermission "java.vm.name", "read";
+    permission java.util.PropertyPermission "com.google.appengine.runtime.version", "read";
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.reflect";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.RuntimePermission "reflectionFactoryAccess";
+    // Likewise, it needs permission to call into Javassist.
+    permission java.lang.RuntimePermission "createSecurityManager";
+    permission java.lang.RuntimePermission "getProtectionDomain";
+
+    // We need to be able to interfere with user threads.
+    permission java.lang.RuntimePermission "modifyThreadGroup";
+    permission java.lang.RuntimePermission "modifyThread";
+
+    // We need to be able to read files on the classpath.
+    // TODO: We should be able to do this via reflection instead, eventually.
+    permission java.io.FilePermission "<<ALL FILES>>", "read";
+};
+
+// Permissions needed for Objenesis. These are granted to the Objenesis code,
+// but because permission checks require the whole stack (down to doPrivileged)
+// to have the permission, the caller needs the permissions as well to be able
+// to use Objenesis.
+grant codebase "file:/usr/share/java/objenesis.jar" {
+    permission java.util.PropertyPermission "java.runtime.version", "read";
+    permission java.util.PropertyPermission "java.vm.info", "read";
+    permission java.util.PropertyPermission "java.vm.name", "read";
+    permission java.util.PropertyPermission "com.google.appengine.runtime.version", "read";
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.reflect";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.RuntimePermission "reflectionFactoryAccess";
+};
+grant codebase "file:./contrib/objenesis.jar" {
+    permission java.util.PropertyPermission "java.runtime.version", "read";
+    permission java.util.PropertyPermission "java.vm.info", "read";
+    permission java.util.PropertyPermission "java.vm.name", "read";
+    permission java.util.PropertyPermission "com.google.appengine.runtime.version", "read";
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.reflect";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.RuntimePermission "reflectionFactoryAccess";
+};
+
+// Permissions needed for Javassist. These work similarly to Objenesis's.
+grant codebase "file:/usr/share/java/javassist.jar" {
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.RuntimePermission "createSecurityManager";
+    permission java.lang.RuntimePermission "getProtectionDomain";
+};
+grant codebase "file:./contrib/javassist.jar" {
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.RuntimePermission "createSecurityManager";
+    permission java.lang.RuntimePermission "getProtectionDomain";
+};
+
+// When testing, the permissions to create the whitelist need to be given to
+// both the whitelist JAR (which does the creation), and the test classes
+// (which request the creation).
+grant codebase "file:${mokapot.whitelistjar}" {
+    permission java.lang.RuntimePermission "getenv.*";
+    permission java.io.FilePermission "<<ALL FILES>>", "execute";
+    permission java.io.FilePermission "${java.io.tmpdir}${/}-", "read,write,delete";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}test-standins", "read";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}test-standins${/}*", "read,write";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}testwlc.p12", "read,write,delete";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}testentry.p12", "read,write,delete";
+};
+
+// Permissions needed for the test file.
+grant codebase "file:${mokapot.buildinternal}" {
+    // Creating the whitelist. These are the same permissions as above.
+    permission java.lang.RuntimePermission "getenv.*";
+    permission java.io.FilePermission "<<ALL FILES>>", "execute";
+    permission java.io.FilePermission "${java.io.tmpdir}${/}-", "read,write,delete";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}test-standins", "read";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}test-standins${/}*", "read,write";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}testwlc.p12", "read,write,delete";
+    permission java.io.FilePermission "${mokapot.buildinternal}${/}testentry.p12", "read,write,delete";
+    permission java.io.FilePermission "test1.p12", "read";
+    permission java.io.FilePermission "test2.p12", "read";
+
+    // Permissions needed to drive the testsuite.
+    permission java.util.PropertyPermission "java.class.path", "read";
+    permission java.util.PropertyPermission "mokapot.buildinternal", "read";
+    permission java.util.PropertyPermission "mokapot.jar", "read";
+};

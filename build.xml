@@ -1,0 +1,782 @@
+<?xml version="1.0"?>
+<project>
+    <property environment="env" />
+
+    <!-- Variables/filesets -->
+    <multirootfileset erroronmissingdir="false" id="libraries-fileset">
+        <basedir file="./contrib"/>
+        <basedir file="/usr/share/java/"/>
+        <include name="javassist.jar"/>
+        <include name="objenesis.jar"/>
+        <include name="asm.jar"/>
+<!--        <include name="asm-all.jar"/> -->
+        <include name="asm-util.jar"/>
+        <include name="asm-commons.jar"/>
+        <include name="asm-tree.jar"/>
+        <include name="asm-analysis.jar"/>
+        <include name="retrolambda.jar"/>
+        <include name="junit.jar"/>
+    </multirootfileset>
+
+    <path id="libraries">
+        <multirootfileset refid="libraries-fileset"/>
+    </path>
+    <path id="libraries-and-common">
+        <multirootfileset refid="libraries-fileset"/>
+        <pathelement path="build-output/classes-common"/>
+    </path>
+    <path id="common-outputs">
+        <pathelement path="build-output/classes-common"/>
+    </path>
+
+    <path id="common-sources">
+        <pathelement path="common/src/main/java"/>
+    </path>
+    <path id="mokapot-and-common-sources">
+        <pathelement path="common/src/main/java"/>
+        <pathelement path="mokapot/src/main/java"/>
+    </path>
+
+    <path id="millr-compiled">
+        <pathelement path="build-output/classes-millr"/>
+    </path>
+    <path id="millr-test-output">
+        <pathelement path="build-internal/test/millr-test"/>
+    </path>
+
+    <path id="mokapot-dependencies">
+        <multirootfileset refid="libraries-fileset"/>
+        <pathelement path="build-output/mokapot.jar"/>
+        <pathelement path="build-output/whitelist.jar"/>
+    </path>
+    <path id="mokapot-dependencies-prejar">
+        <multirootfileset refid="libraries-fileset"/>
+        <pathelement path="build-output/classes-mokapot"/>
+        <pathelement path="build-output/classes-common"/>
+    </path>
+    <path id="mokapot-test-dependencies">
+        <multirootfileset refid="libraries-fileset"/>
+        <pathelement path="build-output/mokapot.jar"/>
+        <pathelement path="build-output/whitelist.jar"/>
+        <pathelement path="build-internal/classes"/>
+    </path>
+
+    <path id="resources">
+        <pathelement path="mokapot/src/test/resources"/>
+    </path>
+
+    <path id="documented-sources">
+        <pathelement path="common/src/main/java"/>
+        <pathelement path="mokapot/src/main/java"/>
+        <pathelement path="mokapot/src/test/java"/>
+        <pathelement path="mokapot/src/whitelist/java"/>
+        <pathelement path="millr/src/main/java"/>
+        <pathelement path="millr/src/test/java"/>
+    </path>
+
+    <multirootfileset erroronmissingdir="false" id="compiled-mokapot-only">
+        <basedir file="build-output/classes-mokapot"/>
+        <include name="**/*.class"/>
+    </multirootfileset>
+    <multirootfileset erroronmissingdir="false" id="compiled-mokapot">
+        <basedir file="build-output/classes-mokapot"/>
+        <basedir file="build-output/classes-common"/>
+        <include name="**/*.class"/>
+    </multirootfileset>
+    <multirootfileset erroronmissingdir="false" id="compiled-whitelist">
+        <basedir file="build-output/classes-whitelist"/>
+        <basedir file="build-output/classes-common"/>
+        <include name="**/*.class"/>
+    </multirootfileset>
+    <multirootfileset erroronmissingdir="false" id="compiled-millr">
+        <basedir file="build-output/classes-millr"/>
+        <basedir file="build-output/classes-common"/>
+        <include name="**/*.class"/>
+    </multirootfileset>
+    <multirootfileset erroronmissingdir="false" id="compiled-output">
+        <basedir file="build-output/classes-millr"/>
+        <basedir file="build-output/classes-mokapot"/>
+        <basedir file="build-output/classes-whitelist"/>
+        <basedir file="build-output/classes-common"/>
+        <include name="**/*.class"/>
+    </multirootfileset>
+    <multirootfileset erroronmissingdir="false" id="compiled-with-tests">
+        <basedir file="build-output/classes-millr"/>
+        <basedir file="build-output/classes-mokapot"/>
+        <basedir file="build-output/classes-whitelist"/>
+        <basedir file="build-output/classes-common"/>
+        <basedir file="build-internal/classes"/>
+        <include name="**/*.class"/>
+    </multirootfileset>
+    <multirootfileset erroronmissingdir="false" id="compiled-mokapot-tests">
+        <basedir file="build-internal/classes/"/>
+        <include name="xyz/acygn/mokapot/test/**/*.class"/>
+    </multirootfileset>
+
+    <property name="output-millr-test" location="build-internal/test/millr"/>
+    <property name="output-millr-testSemantics" location="${output-millr-test}/testSemantics"/>
+    <property name="output-millr-testClasses" location="${output-millr-test}/testclasses"/>
+    <property name="output-millr-testClasses" location="${output-millr-test}/testclasses"/>
+    <property name="output-millr-testMain" location="${output-millr-test}/testMain"/>
+    <property name="mokapot-compiled-classes" location="build-output/classes-mokapot"/>
+
+    <!-- Basic compile -->
+
+    <target name="clean" description="remove all build output">
+        <delete dir="build-output"/>
+        <delete dir="build-internal"/>
+    </target>
+
+    <target name="compile-common"
+            description="compile only code used by both mokapot and millr">
+        <mkdir dir="build-output"/>
+        <mkdir dir="build-output/classes-common"/>
+        <javac includeantruntime="false" srcdir="common/src/main/java"
+               destdir="build-output/classes-common" debug="true">
+            <classpath refid="libraries"/>
+        </javac>
+    </target>
+
+    <target name="compile-mokapot" depends="compile-common"
+            description="compile the mokapot runtime library">
+        <mkdir dir="build-output/classes-mokapot"/>
+        <javac includeantruntime="false" srcdir="mokapot/src/main/java"
+               destdir="build-output/classes-mokapot" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="common-sources"/>
+        </javac>
+    </target>
+    <target name="compile-millr" depends="compile-common"
+            description="compile the millr build tool">
+        <mkdir dir="build-output/classes-millr"/>
+        <javac includeantruntime="false" srcdir="millr/src/main/java"
+               destdir="build-output/classes-millr" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="common-sources"/>
+        </javac>
+    </target>
+
+
+    <!-- TODO: This should be in millr's namespace, but requires one
+         class to be split into several to accomplish that. -->
+
+    <target name="compile-mokapot-aot" depends="compile-mokapot"
+            description="generate standins for Mokapot itself AOT">
+        <pathconvert property="converted-mokapot" refid="compiled-mokapot-only"
+                     pathsep=" ">
+            <packagemapper from="${basedir}/build-output/classes-mokapot/*.class"
+                           to="*" handledirsep="true"/>
+        </pathconvert>
+        <java classname="xyz.acygn.millr.generation.StandinGenerator"
+              dir="build-output/classes-mokapot" fork="true">
+            <classpath refid="mokapot-dependencies-prejar"/>
+            <arg line="${converted-mokapot}"/>
+        </java>
+    </target>
+
+    <target name="compile-whitelist" depends="compile-common"
+            description="compile the mokapot whitelist creation library">
+        <mkdir dir="build-output/classes-whitelist"/>
+        <javac includeantruntime="false" srcdir="mokapot/src/whitelist/java"
+               destdir="build-output/classes-whitelist" debug="true">
+            <classpath refid="common-outputs"/>
+            <sourcepath refid="common-sources"/>
+        </javac>
+    </target>
+
+    <target name="compile-all"
+            depends="compile-millr, compile-mokapot-aot, compile-whitelist"
+            description="compile all production code"/>
+
+
+    <!-- Distributable outputs -->
+
+    <target name="jar-mokapot" depends="compile-mokapot-aot"
+            description="build a jar file for the mokapot runtime library">
+        <!-- This might run while something is using the .jar file, confusing
+             the process in question. On Linux, we can avoid that issue via
+             unlinking the file first. -->
+        <delete file="build-output/mokapot.jar"/>
+        <jar destfile="build-output/mokapot.jar">
+            <multirootfileset refid="compiled-mokapot"/>
+            <manifest>
+                <attribute name="Main-Class"
+                           value="xyz.acygn.mokapot.DistributedServer"/>
+            </manifest>
+        </jar>
+    </target>
+    <target name="jar-whitelist" depends="compile-whitelist"
+            description="build a jar file for the whitelist creation library">
+        <delete file="build-output/whitelist.jar"/>
+        <jar destfile="build-output/whitelist.jar">
+            <multirootfileset refid="compiled-whitelist"/>
+            <manifest>
+                <attribute name="Main-Class"
+                           value="xyz.acygn.mokapot.whitelist.WhitelistBuilderGUI"/>
+            </manifest>
+        </jar>
+    </target>
+    <target name="jar-millr" depends="compile-millr"
+            description="build a jar file for the millr build tool">
+        <jar destfile="build-output/millr.jar">
+            <multirootfileset refid="compiled-millr"/>
+            <manifest>
+                <attribute name="Main-Class"
+                           value="xyz.acygn.millr.Mill"/>
+            </manifest>
+        </jar>
+    </target>
+    <target name="run-millr" depends="compile-millr"
+            description="run the transformation on variable $input and $output$">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <arg line="-o ${output} -i ${input} "/>
+            <classpath path=" build-output/classes-millr/"/>
+            <classpath refid="libraries-and-common"/>
+	    <classpath path="${cp}"/>
+        </java>
+    </target>
+
+
+    <!-- note: millr is an executable, not a library, so it doesn't use
+         Javadoc to tell people how it works -->
+
+    <target name="doc-public"
+            description="build documentation for mokapot's public API">
+        <javadoc destdir="build-output/doc">
+            <sourcepath refid="mokapot-and-common-sources"/>
+            <classpath refid="libraries"/>
+            <link href="file:///usr/share/doc/openjdk-8-jre-headless/api"/>
+            <link href="file:///usr/share/doc/libjavassist-java/api/"/>
+            <link href="file:///usr/share/doc/libobjenesis-java/api/"/>
+            <link href="file:///usr/share/doc/libasm-java/api/"/>
+        </javadoc>
+        <exec executable="sed">
+            <arg value="-f"/>
+            <arg value="common/doc-css-postprocess.sed"/>
+            <arg value="-i"/>
+            <arg value="build-output/doc/stylesheet.css"/>
+        </exec>
+    </target>
+
+
+    <!-- Developer tools -->
+
+    <target name="doc-private" depends="doc-public"
+            description="internal documentation for mokapot and millr">
+        <javadoc destdir="build-internal/doc" access="private">
+            <sourcepath refid="documented-sources"/>
+            <classpath refid="libraries"/>
+            <link href="file:///usr/share/doc/openjdk-8-jre-headless/api"/>
+            <link href="file:///usr/share/doc/libjavassist-java/api/"/>
+            <link href="file:///usr/share/doc/libobjenesis-java/api/"/>
+            <link href="file:///usr/share/doc/libasm-java/api/"/>
+        </javadoc>
+        <exec executable="sed">
+            <arg value="-f"/>
+            <arg value="common/doc-css-postprocess.sed"/>
+            <arg value="-i"/>
+            <arg value="build-output/doc/stylesheet.css"/>
+        </exec>
+    </target>
+
+
+    <!-- Automatic dependency download (run only if the user requests it) -->
+
+    <target name="download-dependencies"
+            description="download production code dependencies">
+        <mkdir dir="./contrib"/>
+
+        <!-- objenesis -->
+        <get src="http://central.maven.org/maven2/org/objenesis/objenesis/2.6/objenesis-2.6.jar"
+             dest="./contrib/objenesis.jar"
+             verbose="on"
+             skipexisting="true" />
+
+        <!-- javassist -->
+        <get src="http://central.maven.org/maven2/org/javassist/javassist/3.23.1-GA/javassist-3.23.1-GA.jar"
+             dest="./contrib/javassist.jar"
+             verbose="on"
+             skipexisting="true" />
+
+        <!-- all of the ASM components -->
+        <get src="http://central.maven.org/maven2/org/ow2/asm/asm/6.2/asm-6.2.jar"
+             dest="./contrib/asm.jar"
+             verbose="on"
+             skipexisting="true" />
+        <get src="http://central.maven.org/maven2/org/ow2/asm/asm-commons/6.2/asm-commons-6.2.jar"
+             dest="./contrib/asm-commons.jar"
+             verbose="on"
+             skipexisting="true" />
+        <get src="http://central.maven.org/maven2/org/ow2/asm/asm-util/6.2/asm-util-6.2.jar"
+             dest="./contrib/asm-util.jar"
+             verbose="on"
+             skipexisting="true" />
+        <get src="http://central.maven.org/maven2/org/ow2/asm/asm-tree/6.2/asm-tree-6.2.jar"
+             dest="./contrib/asm-tree.jar"
+             verbose="on"
+             skipexisting="true" />
+        <get src="http://central.maven.org/maven2/org/ow2/asm/asm-analysis/6.2/asm-analysis-6.2.jar"
+             dest="./contrib/asm-analysis.jar"
+             verbose="on"
+             skipexisting="true" />
+
+        <!-- retrolambda -->
+        <get src="https://oss.sonatype.org/content/groups/public/net/orfjackal/retrolambda/retrolambda/2.5.4/retrolambda-2.5.4.jar"
+             dest="./contrib/retrolambda.jar"
+             verbose="on"
+             skipexisting="true" />
+    </target>
+
+    <target name="download-dependencies-test"
+            description="download dependencies for testing">
+        <get src="https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.2.0/junit-platform-console-standalone-1.2.0.jar"
+             dest="./contrib/junit.jar"
+             verbose="on"
+             skipexisting="true" />
+    </target>
+
+
+    <!-- Test: Mokapot -->
+
+    <target name="compile-mokapot-test" depends="jar-mokapot, jar-whitelist"
+            description="compile tests for mokapot">
+        <mkdir dir="build-internal/classes"/>
+        <javac includeantruntime="false" srcdir="mokapot/src/test/java"
+               destdir="build-internal/classes" debug="true">
+            <classpath refid="mokapot-dependencies"/>
+            <sourcepath refid="mokapot-and-common-sources"/>
+        </javac>
+    </target>
+
+    <!-- Mokapot's tests will also have AOT standins. -->
+    <target name="compile-mokapot-test-aot" depends="compile-mokapot-test"
+            description="generate standins for Mokapot's tests AOT">
+        <pathconvert property="converted-mokapot-tests"
+                     refid="compiled-mokapot-tests" pathsep=" ">
+            <packagemapper from="${basedir}/build-internal/classes/*.class"
+                           to="*" handledirsep="true"/>
+        </pathconvert>
+        <java classname="xyz.acygn.millr.generation.StandinGenerator"
+              dir="build-internal/classes" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <arg line="${converted-mokapot-tests}"/>
+        </java>
+    </target>
+
+    <target name="test-mokapot" depends="compile-mokapot-test-aot"
+            description="run the tests for Mokapot">
+        <java classname="xyz.acygn.mokapot.test.TestMain" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=n"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <sysproperty key="mokapot.whitelistjar" file="build-output/whitelist.jar"/>
+            <sysproperty key="mokapot.buildinternal" file="build-internal/classes"/>
+        </java>
+    </target>
+
+    <target name="test-mokapot-light" depends="compile-mokapot-test-aot"
+            description="run the tests for Mokapot on one JVM with timeouts disabled">
+        <java classname="xyz.acygn.mokapot.test.TestMain" fork="true">
+            <arg value="-dt"/>
+            <arg value="-local"/>
+            <classpath refid="mokapot-test-dependencies"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=n"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <sysproperty key="mokapot.whitelistjar" file="build-output/whitelist.jar"/>
+            <sysproperty key="mokapot.buildinternal" file="build-internal/classes"/>
+        </java>
+    </target>
+
+    <target name="test-mokapot-light-profiled" depends="compile-mokapot-test-aot"
+            description="run the tests for Mokapot on one JVM, using hprof">
+        <java classname="xyz.acygn.mokapot.test.TestMain" fork="true">
+            <arg value="-local"/>
+            <classpath refid="mokapot-test-dependencies"/>
+            <jvmarg value="-agentlib:hprof=cpu=samples,monitor=y"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <sysproperty key="mokapot.whitelistjar" file="build-output/whitelist.jar"/>
+            <sysproperty key="mokapot.buildinternal" file="build-internal/classes"/>
+        </java>
+    </target>
+
+    <!-- Test: Minor Mokapot components -->
+
+    <target name="test-mokapot-util" depends="compile-mokapot-test"
+            description="run the tests for the util package">
+        <java classname="xyz.acygn.mokapot.test.util.TestUtilMain" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=n"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <sysproperty key="mokapot.whitelistjar" file="build-output/whitelist.jar"/>
+            <sysproperty key="mokapot.buildinternal" file="build-internal/classes"/>
+        </java>
+    </target>
+
+    <target name="test-mokapot-whitelist" depends="compile-mokapot-test"
+            description="run the tests for the whitelist package">
+        <java classname="xyz.acygn.mokapot.test.whitelist.TestWhitelist" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=n"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <sysproperty key="mokapot.whitelistjar" file="build-output/whitelist.jar"/>
+            <sysproperty key="mokapot.buildinternal" file="build-internal/classes"/>
+        </java>
+    </target>
+    
+    <!-- Test: Mokapot examples -->
+
+    <!-- TODO: We should be generating the .p12 files ourself, not making the
+         user do it. -->
+    <target name="example-server-mokapot" depends="jar-mokapot"
+            description="run a Mokapot server for the examples">
+        <java classname="xyz.acygn.mokapot.DistributedServer" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <classpath refid="resources"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <arg value="test1.p12"/>
+            <arg value="-k"/>
+            <arg value="testpassword.txt"/>
+            <arg value="127.0.0.1"/>
+            <arg value="15238"/>
+        </java>
+    </target>
+    
+    <target name="example-server-http" depends="compile-mokapot-test"
+            description="run an HTTP server for the ReadyReminder example">
+        <java classname="xyz.acygn.mokapot.examples.readyreminder.ReadyReminderServerHTTP" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <classpath refid="resources"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+        </java>
+    </target>
+    
+    <target name="example-mokapot-readyreminder-local" depends="compile-mokapot-test"
+            description="run the example program ReadyReminderClientLocal">
+        <java classname="xyz.acygn.mokapot.examples.readyreminder.ReadyReminderClientLocal" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <jvmarg value="-ea"/>
+        </java>
+    </target>
+    
+    <target name="example-mokapot-readyreminder-mokapot" depends="compile-mokapot-test"
+            description="run the example program ReadyReminderClientMokapot">
+        <java classname="xyz.acygn.mokapot.examples.readyreminder.ReadyReminderClientMokapot" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <sysproperty key="mokapot.whitelistjar" file="build-output/whitelist.jar"/>
+            <sysproperty key="mokapot.buildinternal" file="build-internal/classes"/>
+        </java>
+    </target>
+
+
+    <!-- Test: Millr -->
+
+    <target name="compile-millr-test" depends="compile-millr, compile-mokapot"
+            description="compile the millr test files">
+        <mkdir dir="${output-millr-testMain}"/>
+        <mkdir dir="reports/tests"/>
+        <javac includeantruntime="false" srcdir="millr/src/test/java"
+               destdir="${output-millr-testMain}" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="common-sources"/>
+            <classpath refid="mokapot-dependencies-prejar"/>
+            <classpath path="build-output/classes-millr"/>
+        </javac>
+    </target>
+
+
+    <!-- running the junitlauncher requires the junit libraries to be present when ant
+    is invoked. Adding them to the <classpath> within <junitlauncher> is not sufficient.
+    For more details see https://ant.apache.org/manual/Tasks/junitlauncher.html. To run
+    the JUnit tests, copy the junit.jar from ./contrib/ into ANT_HOME/lib. -->
+    <target name="test-millr" depends="compile-millr-test"
+            description="run the tests for Millr">
+        <fail message="Ant 1.10.3+ is required!">
+            <condition>
+                <not>
+                    <antversion atleast="1.10.3"/>
+                </not>
+            </condition>
+        </fail>
+        <echo message="${ANT_HOME}"/>
+        <fail message="JUnit libraries not available when invoking ant, see build.xml">
+            <condition>
+                <not>
+                    <available file="${env.ANT_HOME}/lib/junit.jar"/>
+                </not>
+            </condition>
+        </fail>
+        <!-- <echo message="${basedir}"/> -->
+        <junitlauncher printsummary="true">
+        <classpath path="${basedir}/contrib/junit.jar"/>
+            <classpath path="contrib/junit.jar"/>
+            <classpath path="build-internal/classes"/>
+            <classpath path="build-output/classes-common"/>
+            <classpath path="${basedir}/build-output/classes-millr"/>
+            <classpath path="${basedir}/build-internal/out/test/test-millr/"/>
+            <testclasses outputdir="${basedir}/reports/tests">
+                <fileset dir="${basedir}/build-internal/classes">
+                    <include name="xyz/acygn/millr/**/*Test.class"/>
+                    <include name="xyz/acygn/millr/**/*Test.java"/>
+                </fileset>
+                <listener type="legacy-plain" sendSysOut="false" sendsyserr="false"/>
+                <listener type="legacy-xml" sendSysErr="false" sendSysOut="false"/>
+            </testclasses>
+            <!--<test name="xyz.acygn.millr.MethodParameterTest"/>-->
+        </junitlauncher>
+        <junitreport todir="${basedir}/reports/tests">
+            <fileset dir="${basedir}/reports/tests">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${basedir}/reports/tests/html"/>
+        </junitreport>
+    </target>
+
+    <target name="test-mokapotsemantics" depends="compile-millr-test"
+            description="run the tests for millr.mokapotsemantics">
+        <fail message="Ant 1.10.3+ is required!">
+            <condition>
+                <not>
+                    <antversion atleast="1.10.3"/>
+                </not>
+            </condition>
+        </fail>
+        <fail message="JUnit libraries not available when invoking ant, see build.xml">
+            <condition>
+                <not>
+                    <available file="${env.ANT_HOME}/lib/junit.jar"/>
+                </not>
+            </condition>
+        </fail>
+        <!-- <echo message="${basedir}"/> -->
+        <junitlauncher printsummary="true">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="${basedir}/build-internal/classes"/>
+            <classpath path="${basedir}/build-output/classes-common"/>
+            <classpath path="${basedir}/build-output/classes-millr"/>
+            <classpath path="${basedir}/build-internal/out/test/test-millr/"/>
+            <testclasses outputdir="${basedir}/reports/tests">
+                <fileset dir="${basedir}/build-internal/classes">
+                    <include name="xyz/acygn/millr/mokapotsemantics/*Test.class"/>
+                    <include name="xyz/acygn/millr/mokapotsemantics/*Test.java"/>
+                </fileset>
+                <listener type="legacy-plain" sendSysOut="false" sendsyserr="false"/>
+                <listener type="legacy-xml" sendSysErr="false" sendSysOut="false"/>
+            </testclasses>
+            <!--<test name="xyz.acygn.millr.MethodParameterTest"/>-->
+        </junitlauncher>
+        <junitreport todir="${basedir}/reports/tests">
+            <fileset dir="${basedir}/reports/tests">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${basedir}/reports/tests/html"/>
+        </junitreport>
+    </target>
+
+    <target name="test-spec" depends="compile-millr-test"
+            description="Interactive test of individual Millr methods">
+        <fail message="Ant 1.10.3+ is required!">
+            <condition>
+                <not>
+                    <antversion atleast="1.10.3"/>
+                </not>
+            </condition>
+        </fail>
+        <fail message="JUnit libraries not available when invoking ant, see build.xml">
+            <condition>
+                <not>
+                    <available file="${env.ANT_HOME}/lib/junit.jar"/>
+                </not>
+            </condition>
+        </fail>
+        <input message="Enter the desired test class:" addProperty="class"/>
+        <input message="Enter the desired test methods:" addProperty="methods"/>
+        <!-- <echo message="${basedir}"/> -->
+        <junitlauncher printsummary="true">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="${basedir}/build-internal/classes"/>
+            <classpath path="${basedir}/build-output/classes-common"/>
+            <classpath path="${basedir}/build-output/classes-millr"/>
+            <classpath path="${basedir}/build-internal/out/test/test-millr/"/>
+            <test name="xyz.acygn.millr.${class}" methods="${methods}"/>
+        </junitlauncher>
+    </target>
+
+    <target name="test-single"
+            description="Run individual Unit tests for Millr"
+            depends="compile-millr-test" >
+        <junitlauncher printsummary="true">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="${basedir}/build-internal/classes"/>
+            <classpath path="${basedir}/build-output/classes-common"/>
+            <classpath path="${basedir}/build-output/classes-millr"/>
+            <classpath path="${basedir}/build-internal/out/test/test-millr/"/>
+            <listener type="legacy-plain" sendSysOut="true" sendSysErr="true"/>
+            <test name="${test.class}" haltOnFailure="true"/>
+        </junitlauncher>
+        <junitreport todir="${basedir}/reports/tests">
+            <fileset dir="${basedir}/reports/tests">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${basedir}/reports/tests/html"/>
+        </junitreport>
+        <fail message="Tests failed!" if="test.failed"/>
+    </target>
+
+    <target name="compile-millr-testClasses"
+            description="Compile the test-classes that should be used to test on Millr and Mokapot"
+            depends="compile-millr-testSemantics">
+        <mkdir dir="${output-millr-testClasses}"/>
+        <javac includeantruntime="false" srcdir="millr/src/test/testclasses/java/"
+               destdir="${output-millr-testClasses}" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="${mokapot-compiled-classes}"/>
+            <classpath path="${output-millr-testSemantics}"/>
+            <sourcepath refid="common-sources"/>
+        </javac>
+    </target>
+
+    <target name="compile-millr-testSemantics"
+            description="Compile the test-runners classes"
+            depends="compile-mokapot, compile-common, compile-millr">
+        <mkdir dir="${output-millr-testSemantics}"/>
+        <javac includeantruntime="false" srcdir="millr/src/test/millrsemantictest/src/"
+               destdir="${output-millr-testSemantics}" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="common-sources"/>
+            <classpath refid="millr-compiled"/>
+        </javac>
+    </target>
+
+    <target name="test-millr-on-jEdit"
+            description="run Millr on jEdit"
+            depends="compile-common, compile-millr">
+       <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath path="build-output/classes-millr/"/>
+            <classpath refid="libraries-and-common"/>
+            <arg line="-o output/jEdit -i /home/thomasc/Work/jEdit -v"/>
+       </java>
+    </target>
+
+    <target name="compile-all-with-tests"
+            depends="compile-mokapot-test-aot, compile-millr-test,
+                     compile-millr-testClasses, compile-all"
+            description="compile all code and all test code">
+    </target>
+
+    <!-- Benchmark -->
+
+    <target name="compile-mokapot-benchmark" depends="jar-mokapot"
+            description="compile the mokapot benchmark suite">
+        <mkdir dir="build-internal/classes"/>
+        <javac includeantruntime="false" srcdir="mokapot/src/benchmark/java"
+               destdir="build-internal/classes" debug="true">
+            <classpath refid="mokapot-dependencies"/>
+            <classpath refid="resources"/>
+            <sourcepath refid="common-sources"/>
+        </javac>
+    </target>
+
+    <target name="benchmark-config" depends="compile-mokapot-benchmark"
+            description="generate a configuration for the Mokapot benchmarks">
+        <delete dir="build-internal/benchmark-config" />
+        <java classname="xyz.acygn.mokapot.benchmarksuite.benchmark.BenchmarkConfigMain">
+            <classpath refid="mokapot-test-dependencies"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <sysproperty key="mokapot.whitelistjar" file="build-output/whitelist.jar"/>
+            <sysproperty key="mokapot.buildinternal" file="build-internal/classes"/>
+        </java>
+    </target>
+
+    <target name="benchmark-server-mokapot" depends="benchmark-config"
+            description="run a Mokapot server for the benchmark">
+        <java classname="xyz.acygn.mokapot.DistributedServer" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <classpath refid="resources"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15234,suspend=n"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <arg value="build-internal/benchmark-config/server1.p12"/>
+            <arg value="-k"/>
+            <arg value="build-internal/benchmark-config/password.txt"/>
+            <arg value="127.0.0.1"/>
+            <arg value="15238"/>
+        </java>
+    </target>
+
+    <target name="benchmark-server-mokapot-profiled" depends="benchmark-config"
+            description="run a Mokapot server for the benchmark under the hprof profiler">
+        <java classname="xyz.acygn.mokapot.DistributedServer" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <classpath refid="resources"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-test.policy"/>
+            <jvmarg value="-agentlib:hprof=cpu=samples,monitor=y"/>
+            <sysproperty key="mokapot.jar" file="build-output/mokapot.jar"/>
+            <arg value="build-internal/benchmark-config/server1.p12"/>
+            <arg value="-k"/>
+            <arg value="build-internal/benchmark-config/password.txt"/>
+            <arg value="127.0.0.1"/>
+            <arg value="15238"/>
+        </java>
+    </target>
+
+    <target name="benchmark-server-rmi" depends="compile-mokapot-benchmark"
+            description="run an RMI server for the benchmark">
+        <java classname="xyz.acygn.mokapot.rmiserver.RMIServerImplementation" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <classpath refid="resources"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-benchmark.policy"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15232,suspend=n"/>
+            <arg value = "15239"/>
+        </java>
+    </target>
+
+    <target name="benchmark-mokapot" depends="compile-mokapot-benchmark"
+            description="run the benchmarks for Mokapot; requires running servers">
+        <java classname="xyz.acygn.mokapot.benchmarksuite.benchmark.Main" fork="true">
+            <classpath refid="mokapot-test-dependencies"/>
+            <classpath refid="resources"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=mokapot/src/main/resources/localhost-benchmark.policy"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15231,suspend=n"/>
+        </java>
+    </target>
+</project>

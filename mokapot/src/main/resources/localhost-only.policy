@@ -1,0 +1,18 @@
+grant {
+    permission java.net.SocketPermission "127.0.0.1", "connect,resolve,accept,listen";
+    permission java.net.SocketPermission "localhost", "connect,resolve,accept,listen";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.RuntimePermission "createSecurityManager";
+    permission java.lang.RuntimePermission "getProtectionDomain";
+    permission java.util.PropertyPermission "java.runtime.version", "read";
+    permission java.util.PropertyPermission "java.vm.info", "read";
+    permission java.util.PropertyPermission "java.vm.name", "read";
+    permission java.util.PropertyPermission "com.google.appengine.runtime.version", "read";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.reflect";
+    permission java.lang.RuntimePermission "modifyThreadGroup";
+    permission java.lang.RuntimePermission "modifyThread";
+    permission java.lang.RuntimePermission "reflectionFactoryAccess";
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+    permission java.io.FilePermission "<<ALL FILES>>", "read";
+};

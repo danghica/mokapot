@@ -1,0 +1,401 @@
+OBJECT TRACKING AND GARBAGE COLLECTION
+
+Mokapot's garbage collector uses Java's garbage collector to collect garbage
+locally on one JVM, and adds its own layer on top of that to collect garbage
+cross-JVM. The algorithm is designed to be correct even in cases such as
+migration.
+
+Mokapot also needs an unusual amount of interaction with Java's garbage
+collector, so several utility classes were written that makes it possible to
+effectively change the way Java's garbage collection behaves. (Many of these
+are workarounds for things that should be much easier, but that Java has no
+appropriate primitives for.)
+
+Current status: Believed to work, and with no obvious imrpovements.
+Mathematical interest: Interesting; the algorithm was created for Mokapot
+(although it's unknown how similar it is to existing algorithms), and already
+has a sketch correctness proof.
+
+Files:
+
+Tracking objects and maintaining garbage collection state:
+xyz.acygn.mokapot.LifetimeManager
+xyz.acygn.mokapot.LocationManager
+xyz.acygn.mokapot.MarshalledDescription
+xyz.acygn.mokapot.ObjectLocation
+xyz.acygn.mokapot.ReferenceValue
+xyz.acygn.mokapot.TimestampedLocation
+xyz.acygn.mokapot.util.DummyScheduledFuture
+
+Messages that implement garbage collection:
+xyz.acygn.mokapot.LocationManagerStatusMessage
+xyz.acygn.mokapot.GarbageCollectionMessage
+xyz.acygn.mokapot.ThirdPartyMessage
+
+Hooking into Java's garbage collection code:
+xyz.acygn.mokapot.util.BackgroundGarbageCollection
+xyz.acygn.mokapot.util.DoublyWeakConcurrentMap
+xyz.acygn.mokapot.util.Expirable
+xyz.acygn.mokapot.util.ExpirableMap
+xyz.acygn.mokapot.util.KeepalivePool
+xyz.acygn.mokapot.util.WeakConcurrentSet
+xyz.acygn.mokapot.util.WeakValuedConcurrentMap
+
+===============================================================================
+
+STANDINS AND SERIALIZATION
+
+A Standin is basically a Mokapot-specific extension to an existing class,
+which adds two main categories of functionality to it: the ability to
+delegate method calls to a different object (proxying), and the ability
+to convert the object to and from a "description". (A description is
+like a serialization of the object, but may be shallow rather than deep,
+i.e. it can contain references to non-copiable objects.)
+
+These two Standin functionalities are connected in several ways, e.g. an
+object can convert its fields into a description (allowing it to be
+revived elsewhere), then convert its functionality from running method
+calls directly to proxying them elsewhere. (The combination of these is
+how an object would be migrated away.)
+
+Current status: Believed to mostly work, but unoptimized (there's a lot of
+scope for optimisation that's being unused), and failing in ridiculous
+corner cases and on parts of Java we're unaware of. The functionality is
+a bit disorganized, being split over too many classes and with no clear
+rules as to which class any particular piece of functionality should go in
+(e.g. in some cases related to marshalling, the Knowledge tree calls into
+the Standin tree, in others, it's the other way round).
+Mathematical interest: The main difficulty here is in handling the full
+complexity of Java and in working round its restrictions.
+
+Files:
+
+Standin generation (i.e. code generators that make standins or that load
+existing standin classes):
+- At compile time:
+xyz.acygn.millr.generation.MethodReference
+xyz.acygn.millr.generation.StandinGenerator
+- At runtime:
+xyz.acygn.mokapot.GeneratedStandinFactory
+xyz.acygn.mokapot.RuntimeStandinGeneration
+xyz.acygn.mokapot.StandinFactory
+xyz.acygn.mokapot.StandinTechnique
+xyz.acygn.mokapot.util.UniversalInvocationHandler
+
+Standin implementations (i.e. classes that /are/ standins, or else parts
+of them):
+xyz.acygn.mokapot.ManagedLocalStandinStorage
+xyz.acygn.mokapot.MarshalledDescriptionStandin
+xyz.acygn.mokapot.ReflectiveStandin
+xyz.acygn.mokapot.RemoteOnlyStandin
+xyz.acygn.mokapot.RuntimeGeneratedStandinHandler
+xyz.acygn.mokapot.skeletons.Standin
+xyz.acygn.mokapot.skeletons.StandinStorage
+xyz.acygn.mokapot.skeletons.TrivialStandinStorage
+
+Standin API (i.e. classes that define how standins interact with the rest
+of the code):
+xyz.acygn.mokapot.skeletons.ArtificialWrapper
+xyz.acygn.mokapot.skeletons.Standin
+xyz.acygn.mokapot.skeletons.ForwardingStandinStorage
+xyz.acygn.mokapot.skeletons.IndirectStandin
+xyz.acygn.mokapot.skeletons.InvokeByCode
+xyz.acygn.mokapot.skeletons.ProxyOrWrapper
+xyz.acygn.mokapot.skeletons.SeizeableStandin
+
+Description/undescription/serialisation/deserialisation:
+- "Knowledge" classes:
+xyz.acygn.mokapot.ArrayKnowledge
+xyz.acygn.mokapot.ClassKnowledge
+xyz.acygn.mokapot.CopiableKnowledge
+xyz.acygn.mokapot.EnumKnowledge
+xyz.acygn.mokapot.InterfaceKnowledge
+xyz.acygn.mokapot.LambdaKnowledge
+xyz.acygn.mokapot.NonCopiableKnowledge
+xyz.acygn.mokapot.PrimitivePOJOKnowledge
+xyz.acygn.mokapot.SpecialCaseKnowledge
+xyz.acygn.mokapot.UnmarshallableKnowledge
+xyz.acygn.mokapot.UnreliablyCopiableKnowledge
+- Non-Mokapot-specific "what is possible?" classes
+xyz.acygn.mokapot.util.ObjectMethodDatabase
+xyz.acygn.mokapot.util.VMInfo
+- Definition of the serialisation format:
+xyz.acygn.mokapot.wireformat.ClassNameDescriptions
+xyz.acygn.mokapot.wireformat.DescriptionOutput
+xyz.acygn.mokapot.wireformat.MethodCodes
+xyz.acygn.mokapot.wireformat.ObjectDescription
+xyz.acygn.mokapot.wireformat.ObjectWireFormat
+xyz.acygn.mokapot.wireformat.ReadableDescription
+- Others:
+xyz.acygn.mokapot.util.DataByteBuffer
+xyz.acygn.mokapot.DescriptionWriter
+xyz.acygn.mokapot.Marshalling
+
+Markers:
+xyz.acygn.mokapot.markers.Copiable
+xyz.acygn.mokapot.markers.NonCopiable
+
+Classes designed to be serialized:
+xyz.acygn.mokapot.CopiableRunnable
+xyz.acygn.mokapot.CopiableSupplier
+
+===============================================================================
+
+GLOBAL STACK MAINTENANCE
+
+Remote communications can cause a single thread to cross multiple Java Virtual
+Machines, so instead of existing in a single place, we need to combine all the
+"thread projections" on the individual machines into a single "global thread".
+This has a "global stack" which works like the stack of a regular thread, but
+with Mokapot serving the job of linking the various parts of it.
+
+Current status: Working in all common cases. There are some edge cases (notably
+`stopCommunication` in parallel with other things) where the correct behaviour
+is hard to define, but the current behaviour does not make a sensible definition.
+Mathematical interest: This is basically just game semantics, with a few twists
+that are a consequence of Java features that don't compose well with them. In
+particular, we have a very hierarchical/scoped model of the global stacks, but
+Java has some global effects which don't really conform to it, requiring complex
+workarounds. Trying to make `stopCommunication` work adds most of the complexity,
+but there is some even without it.
+
+Files:
+
+Most of the behaviour is in the main class DistributedCommunicator.
+
+Messages that implement a global stack and/or maintain global thread state:
+xyz.acygn.mokapot.InterruptMessage
+xyz.acygn.mokapot.MethodMessage
+xyz.acygn.mokapot.OperationCompleteMessage
+xyz.acygn.mokapot.SynchronousMessage
+
+Classes that track global thread state:
+xyz.acygn.mokapot.GlobalID
+xyz.acygn.mokapot.JoinablePooledThread
+xyz.acygn.mokapot.MessageAddress
+xyz.acygn.mokapot.PooledThread
+xyz.acygn.mokapot.ThreadProjectionTracker
+xyz.acygn.mokapot.util.ResettableThreadLocal
+
+===============================================================================
+
+MIGRATION
+
+Migration is the act of taking an object and changing which system its data
+resides on (by changing the types of standins from long to short or vice
+versa). At present, non-standins cannot be migrated because Java does not
+provide a suitable garbage collector hook.
+
+Current status: Only manual migration of standins is supported; automatic
+migration of standins is not completely implemented, other forms of migration
+are unimplemented and not specified.
+Mathematical interest: It makes the garbage collection more complex to prove
+correct (although I have such a proof), and because it requires coordination of
+two JVMs, proving it to be thread-safe is nontrivial (although not particularly
+interesting, it's more of a "it's clear something like this can work, but you
+have to prove it" situation).
+
+Files:
+
+Messages that are used by migration:
+xyz.acygn.mokapot.MigrationActionsMessage
+xyz.acygn.mokapot.MigrationMessage
+xyz.acygn.mokapot.MigrationSynchronisationMessage
+
+Synchronization/thread-safety:
+xyz.acygn.mokapot.MigrationMonitor
+xyz.acygn.mokapot.MigrationSynchronisationMessage
+
+The actual process of migration:
+xyz.acygn.mokapot.LocationManager
+xyz.acygn.mokapot.MigrationActions
+
+Markers:
+xyz.acygn.mokapot.markers.NonMigratable
+
+===============================================================================
+
+COMMUNICATION
+
+We need to actually be able to send messages from one JVM to another, or one
+communicator to another, and to be able to authenticate the ends of the
+connection.
+
+Current status: Generally appears to work, although there's believed to be at
+least one major bug here (with the cause unknown), and some specific cases
+(e.g. two outbound-only connections talking to each other) are unimplemented.
+The abstractions related to endpoints and addresses aren't extensible in the
+correct way, making them fragile and making further development in this
+direction hard, and this part of the code could do with a rewrite.
+Mathematical interest: Much of this is just off-the-shelf code for things like
+cryptography. Some of it (e.g. the way that connections can be run in either a
+synchronous or an asynchronous way) is likely to be novel, but the solutions
+that were used would not be particularly surprising or unexpected.
+
+Files:
+
+Authentication/authorisation:
+- Generation of cryptographic material:
+xyz.acygn.mokapot.whitelist.*
+(also some non-Java source files)
+- At runtime:
+xyz.acygn.mokapot.CommunicationEndpoint
+xyz.acygn.mokapot.EndpointKeystore
+xyz.acygn.mokapot.SecureTCPCommunicationEndpoint
+
+Identification of systems:
+xyz.acygn.mokapot.Communicable
+xyz.acygn.mokapot.CommunicationAddress
+xyz.acygn.mokapot.LoopbackCommunicationAddress
+xyz.acygn.mokapot.TCPCommunicable
+xyz.acygn.mokapot.TCPCommunicationAddress
+xyz.acygn.mokapot.SiteLocalCommunicationAddress
+xyz.acygn.mokapot.StaticInternetCommunicationAddress
+
+Communication within one JVM (for testing/profiling purposes);
+xyz.acygn.mokapot.IsolatedEndpoint
+xyz.acygn.mokapot.SecondaryEndpoint
+xyz.acygn.mokapot.util.BlockingQueueInputStream
+xyz.acygn.mokapot.util.BlockingQueueOutputStream
+
+The actual act of communicating:
+xyz.acygn.mokapot.AsynchronousMessage
+xyz.acygn.mokapot.DistributedConnectionAcceptor
+xyz.acygn.mokapot.DistributedMessage
+xyz.acygn.mokapot.DistributedReceiveConnection
+xyz.acygn.mokapot.DistributedSendConnection
+xyz.acygn.mokapot.IdentityMessage
+xyz.acygn.mokapot.MessageEnvelope
+xyz.acygn.mokapot.OutboundOnlyCommunicationAddress
+xyz.acygn.mokapot.ReverseConnectMessage
+xyz.acygn.mokapot.util.SocketLike
+xyz.acygn.mokapot.util.SocketWrapper
+xyz.acygn.mokapot.util.StreamSocketLike
+
+===============================================================================
+
+VISIBILITY AND INTERNAL SECURITY
+
+Mokapot has to juggle two different considerations: the operations it needs to
+use to implement things like deserialisation tend to be highly privileged and
+powerful, but it's running on the same JVM as code that may be relying on the
+guarantees of Java (e.g. no calls to private methods from outside the package)
+for its own security. Making things worse, Mokapot operations may be called
+into from more or less anywhere due to things like method calls on a long
+reference.
+
+As such, Mokapot needs to try to ensure that it can do privileged operations
+itself, even on behalf of the user's code, without allowing the user's code
+itself to do the same operations.
+
+Current status: Very rudimentary; this is complete just enough to make things
+work, but likely has some major holes in it, with no real attempt made to
+secure things beyond "don't allow untrusted code to run at all". Despite being
+so small, this code is on a lot of security and visiblity boundaries, and so
+Millr and Mokapot tend to repeatedly break it in each other.
+Mathematical interest: A correct solution to this problem would be likely to be
+very interesting and nontrivial. The current code is not a correct solution.
+
+Files:
+
+xyz.acygn.mokapot.Authorisations
+xyz.acygn.mokapot.ExposedMethodsImpl
+xyz.acygn.mokapot.LengthIndependent
+xyz.acygn.mokapot.TestHooks
+xyz.acygn.mokapot.skeletons.Authorisation
+xyz.acygn.mokapot.skeletons.ExposedMethods
+
+===============================================================================
+
+ERROR HANDLING AND LOGGING
+
+There are plenty of ways in which things can go wrong; we'd want to (ideally)
+recover from them, or failing that, inform the user of what happened. Users
+might also want insight into what is happening for profiling or debugging
+purposes.
+
+Current status: There's no attempt made to recover from error, meaning that
+this code is currently very small and simple.
+Mathematical interest: A full error recovery system would likely be very
+interesting (see, e.g., Kelsey's work), but nothing like that is present at
+the moment.
+
+Files:
+
+xyz.acygn.mokapot.DebugMonitor
+xyz.acygn.mokapot.TestHooks
+xyz.acygn.mokapot.markers.DistributedError
+xyz.acygn.mokapot.util.InstrumentedLock
+xyz.acygn.mokapot.util.Stopwatch
+
+===============================================================================
+
+THREAD- AND TYPE-SAFETY
+
+Mokapot is written assuming a fully multithreaded environment where few
+assumptions can be made about the way in which other threads will interfere
+with the running thread. As such, it contains many abstractions to make
+multithreaded code easier to write correctly.
+
+Mokapot also aims to have the compiler verify its type-safety to the largest
+extent possible (which is often not very far; much of what we do inherently
+requires runtime rather than compile-time type safety checks), and contains
+helper methods to make type-safe code easier to write.
+
+Current status: Expanded whenever a new method is needed.
+Mathematical interest: Nothing here is particularly unusual; these are mostly
+the sort of classes you'd expect to see in a standard library. (In fact, in
+many of these cases, there are programming languages which have the
+functionality in question built-in; I just reimplemented it for Java.)
+
+Files:
+
+xyz.acygn.mokapot.util.AutocloseableLockWrapper
+xyz.acygn.mokapot.util.DeterministicAutocloseable
+xyz.acygn.mokapot.util.CrossThreadReadWriteLock
+xyz.acygn.mokapot.util.MutexPool [unused]
+xyz.acygn.mokapot.util.ThreadUtils
+xyz.acygn.mokapot.util.TypeSafe
+
+===============================================================================
+
+ENTRY POINTS
+
+The classes from which users are able to actually use the distributed
+communication system. These also hold the state for a single instance of the
+system.
+
+Current status: The API for this could always do with improvement, but is
+relatively useful even at the moment. Once the method-call-based API is fully
+finished, we could create an alternative API by merging Stefan's annotations
+code.
+Mathematical interest: Effectively none.
+
+xyz.acygn.mokapot.DistributedCommunicator
+xyz.acygn.mokapot.DistributedServer
+
+===============================================================================
+
+UTILITY CLASSES
+
+Classes which I wrote because their functionality wasn't directly available in
+Java's standard library, and it was easier/simpler to write them myself than to
+add a dependency for them (which would cause extra complexity in the project
+for all the developers and all the end users).
+
+Current status: These are written whenever it seems like they would be useful.
+Mathematical interest: Effectively none. Nothing here is particularly novel or
+interesting, and all these are likely to have been written before in other
+contexts.
+
+xyz.acygn.mokapot.util.ComparablePair
+xyz.acygn.mokapot.util.EnumerationIterator
+xyz.acygn.mokapot.util.ExtendedList
+xyz.acygn.mokapot.util.Holder
+xyz.acygn.mokapot.util.ImmutableSets
+xyz.acygn.mokapot.util.Lazy
+xyz.acygn.mokapot.util.ObjectIdentity
+xyz.acygn.mokapot.util.ObjectUtils
+xyz.acygn.mokapot.util.Pair
+xyz.acygn.mokapot.util.StringifyUtils
+

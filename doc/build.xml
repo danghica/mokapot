@@ -1,0 +1,211 @@
+<?xml version="1.0"?>
+<project>
+    <path id="libraries">
+        <multirootfileset erroronmissingdir="false">
+            <basedir file="./contrib"/>
+            <basedir file="/usr/share/java/"/>
+            <include name="javassist.jar"/>
+            <include name="objenesis.jar"/>
+            <include name="asm-all.jar"/>
+        </multirootfileset>
+    </path>
+    <fileset dir="classes" id="compiledoutput">
+        <include name="**/*.class" />
+    </fileset>
+    <target name="clean" description="remove intermediate files">
+        <delete dir="classes"/>
+        <delete dir="doc"/>
+        <delete dir="doc-private"/>
+        <delete file="test1.p12"/>
+        <delete file="test2.p12"/>
+        <delete file="mokapot.jar"/>
+        <delete file="mokapot.zip"/>
+        <delete file="mokapot-plus-benchmarks.zip"/>
+    </target>
+    <target name="compile" description="compile the main source code">
+        <mkdir dir="classes"/>
+        <javac includeantruntime="false" srcdir="src/main/java" destdir="classes" debug="true">
+            <classpath refid="libraries"/>
+        </javac>
+    </target>
+    <target name="jar" depends="compile" description="build a jar file for the library">
+        <jar destfile="mokapot.jar">
+            <fileset dir="classes">
+                <exclude name="xyz/acygn/mokapot/test/**"/>
+                <exclude name="xyz/acygn/mokapot/examples/**"/>
+                <exclude name="xyz/acygn/mokapot/benchmark/**"/>
+                <exclude name="xyz/acygn/mokapot/rmiserver/**"/>
+            </fileset>
+            <manifest>
+                <attribute name="Main-Class"
+                           value="xyz.acygn.mokapot.DistributedServer"/>
+            </manifest>
+        </jar>
+    </target>
+    <target name="test-whitelist" description="generate whitelists for testing">
+        <exec executable="scripts/setuptestwhitelist.sh" failonerror="true"/>
+    </target>
+    <target name="compile-test" depends="compile" description="compile the test source code">
+        <mkdir dir="classes"/>
+        <javac includeantruntime="false" srcdir="src/test/java" destdir="classes" debug="true">
+            <classpath refid="libraries"/>
+        </javac>
+    </target>
+    <target name="generate-standins" depends="compile-test"
+            description="generate standins for mokapot classes">
+        <pathconvert property="compiledoutput" refid="compiledoutput"
+            pathsep=" ">
+            <packagemapper from="${basedir}/classes/*.class" to="*"
+                handledirsep="true" />
+        </pathconvert>
+        <java classname="xyz.acygn.mokapot.analysis.StandinGenerator"
+              dir="classes" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries"/>
+            <arg line="${compiledoutput}"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=n"/>
+        </java>
+    </target>
+    <target name="run" depends="jar" description="run the server">
+        <echo message="Note: you will need to provide the password for server.p12 on standard input."/>
+        <echo message="There is no precaution against password echo."/>
+        <echo message="If typing the password interactively, watch for shoulder-surfers!"/>
+        <java jar="mokapot.jar" fork="true">
+            <classpath refid="libraries"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-only.policy"/>
+            <arg value="server.p12"/>
+        </java>
+    </target>
+    <target name="run-monitor" depends="compile" description="run the server with a debug monitor and watchdog">
+        <java jar="mokapot.jar" fork="true">
+            <classpath refid="libraries"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-only.policy"/>
+            <arg value="-d"/>
+            <arg value="-w"/>
+        </java>
+    </target>
+    <target name="example-echomessage" depends="compile-test"
+            description="run the echo-message example">
+        <java classname="xyz.acygn.mokapot.examples.echomessage.EchoMessage" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-test.policy"/>
+        </java>
+    </target>
+    <target name="example-helloworld" depends="compile-test"
+            description="run the hello-world example">
+        <java classname="xyz.acygn.mokapot.examples.helloworld.HelloWorld" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-test.policy"/>
+        </java>
+    </target>
+    <target name="example-helloworld-profile" depends="compile-test"
+            description="profile the hello-world example">
+        <java classname="xyz.acygn.mokapot.examples.helloworld.HelloWorld" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-test.policy"/>
+            <jvmarg value="-Xprof"/>
+            <arg value="test"/>
+            <arg value="1000"/>
+        </java>
+    </target>
+    <target name="test" depends="generate-standins, test-whitelist" description="run the test runner">
+        <java classname="xyz.acygn.mokapot.test.TestMain" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=n"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-test.policy"/>
+        </java>
+    </target>
+    <target name="test-debug" depends="generate-standins, test-whitelist" description="let a debugger attach to the test runner">
+        <java classname="xyz.acygn.mokapot.test.TestMain" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=y"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-test.policy"/>
+        </java>
+    </target>
+    <target name="test-profile" depends="generate-standins, test-whitelist" description="run the test runner under profiling">
+        <java classname="xyz.acygn.mokapot.test.TestMain" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=src/main/resources/localhost-test.policy"/>
+            <jvmarg value="-Xprof"/>
+        </java>
+    </target>
+    <target name="doc" depends="compile" description="generate documentation for the public API">
+        <javadoc sourcepath="src/main/java" destdir="doc">
+            <classpath refid="libraries"/>
+            <link href="file:///usr/share/doc/openjdk-8-jre-headless/api"/>
+            <link href="file:///usr/share/doc/libjavassist-java/api/"/>
+            <link href="file:///usr/share/doc/libobjenesis-java/api/"/>
+            <link href="file:///usr/share/doc/libasm-java/api/"/>
+        </javadoc>
+        <exec executable="sed">
+            <arg value="-f"/>
+            <arg value="doc-css-postprocess.sed"/>
+            <arg value="-i"/>
+            <arg value="doc/stylesheet.css"/>
+        </exec>
+    </target>
+    <target name="distribution" depends="doc,jar"
+            description="generate a binary (JAR + docs) distribution">
+        <zip destfile="mokapot.zip">
+            <fileset dir=".">
+                <include name="doc/**"/>
+                <include name="assets/**"/>
+                <include name="examples/**"/>
+                <include name="mokapot.jar"/>
+                <include name="*.md"/>
+            </fileset>
+        </zip>
+    </target>
+    <target name="distribution-benchmarks" depends="doc,jar"
+            description="generate a binary (JAR + docs) distribution, plus benchmark source">
+        <zip destfile="mokapot-plus-benchmarks.zip">
+            <fileset dir=".">
+                <include name="doc/**"/>
+                <include name="assets/**"/>
+                <include name="examples/**"/>
+                <include name="src/benchmark/**"/>
+                <include name="mokapot.jar"/>
+                <include name="*.md"/>
+            </fileset>
+        </zip>
+    </target>
+    <target name="doc-private" depends="doc" description="generate documentation of the project internals">
+        <javadoc destdir="doc-private/" access="private">
+            <fileset dir="src">
+                <include name="main/**/*.java"/>
+                <include name="test/**/*.java"/>
+            </fileset>
+            <classpath refid="libraries"/>
+            <link href="file:///usr/share/doc/openjdk-8-jre-headless/api"/>
+            <link href="file:///usr/share/doc/libjavassist-java/api/"/>
+            <link href="file:///usr/share/doc/libobjenesis-java/api/"/>
+            <link href="file:///usr/share/doc/libasm-java/api/"/>
+        </javadoc>
+        <exec executable="sed">
+            <arg value="-f"/>
+            <arg value="doc-css-postprocess.sed"/>
+            <arg value="-i"/>
+            <arg value="doc-private/stylesheet.css"/>
+        </exec>
+    </target>
+</project>

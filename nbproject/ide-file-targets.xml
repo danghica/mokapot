@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." name="mokapot-combined-IDE">
+    <target name="-profile-check">
+        <startprofiler freeform="true"/>
+    </target>
+    <!-- TODO: edit the following target according to your needs -->
+    <!-- (more info: http://netbeans.org/kb/articles/freeform-config.html#profilej2se) -->
+    <target depends="-profile-check" if="profiler.configured" name="profile-nb">
+        <path id="cp">
+            <!-- TODO configure the runtime classpath for your project here: -->
+        </path>
+        <!-- TODO configure the main class for your project here: -->
+        <java classname="some.main.Class" fork="true">
+            <classpath refid="cp"/>
+            <jvmarg line="${agent.jvmargs}"/>
+        </java>
+    </target>
+    <!-- TODO: edit the following target according to your needs -->
+    <!-- (more info: http://www.netbeans.org/kb/articles/freeform-config.html#runsingle) -->
+    <target name="run-selected-file-in-java">
+        <fail unless="run.class">Must set property 'run.class'</fail>
+        <java classname="${run.class}" failonerror="true" fork="true">
+            <classpath>
+                <pathelement path="build-output/classes-millr/:/usr/share/java/ant-junit.jar:/home/thomasc/Downloads/junit-4.12.jar:build-output/classes-millr:/usr/share/java/asm-6.0.jar:contrib/junit-jupiter-api-5.3.0-M1.jar"/>
+                <pathelement location="build-internal/classes"/>
+            </classpath>
+        </java>
+    </target>
+    <target name="test-single" description="Run individual Unit tests" depends="compile-common, compile-millr" >  
+    <junit
+        printsummary="yes"
+        errorProperty="test.failed"
+        failureproperty="test.failed"
+        haltonfailure="yes" 
+        fork="yes"
+        showoutput="yes">
+        <formatter type="plain" usefile="false"/>    
+              <classpath refid="libraries-and-common"/>
+            <classpath path="${basedir}/build-internal/classes"/>
+            <classpath path="${basedir}/build-output/classes-common"/>
+            <classpath path="${basedir}/build-output/classes-millr"/>
+            <classpath path="${basedir}/build-internal/out/test/test-millr/"/>
+        <test name="${test.class}Test" todir="${basedir}/reports/tests">
+        </test>
+    </junit>
+    <fail message="Tests failed!" if="test.failed"/>
+</target>
+</project>

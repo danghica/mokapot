@@ -1,0 +1,297 @@
+<?xml version="1.0"?>
+<project>
+
+   <multirootfileset erroronmissingdir="true" id="libraries-fileset">
+    <basedir file="../contrib/"/>
+    <include name="javassist.jar"/>
+    <include name="objenesis.jar"/>
+    <include name="asm.jar"/>
+        <include name="asm-tree.jar"/>
+        <include name="asm-commons.jar"/>
+        <include name="asm-analysis.jar"/>
+    <include name="asm-util.jar"/> 
+                <include name="junit.jar"/>
+            <include name="ant-junit.jar"/>
+  </multirootfileset>
+  <path id="libraries-and-common">
+    <pathelement path="../build-output/classes-common"/>
+    <multirootfileset refid="libraries-fileset"/>
+  </path>
+    <path id="libraries">
+        <multirootfileset erroronmissingdir="true">
+            <basedir file="../contrib"/>
+            <include name="javassist.jar"/>
+            <include name="objenesis.jar"/>
+            <include name="asm.jar"/>
+        <include name="asm-tree.jar"/>
+        <include name="asm-commons.jar"/>
+        <include name="asm-analysis.jar"/>
+       <include name="asm-util.jar"/> 
+            <include name="junit.jar"/>
+            <include name="ant-junit.jar"/>
+            <basedir file="../build-output/classes-common"/>
+        </multirootfileset>
+    </path>
+
+
+    <target name="clean" description="remove intermediate files">
+        <delete dir="classes"/>
+        <delete dir="output"/>
+        <delete dir="doc"/>
+        <delete dir="doc-private"/>
+        <delete dir="FailedTransformation"/>
+    </target>
+    <target name="compile" description="compile the main source code">
+        <mkdir dir="classes"/>
+        <javac includeantruntime="false" srcdir="src/main/java" destdir="classes" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="libraries"/>
+        </javac>
+    </target>
+    <target name="compile-test-old" depends="" description="compile the test source code">
+        <mkdir dir="classes/old-test"/>
+        <javac includeantruntime="false" srcdir="src/old-test/" destdir="classes/old-test" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="libraries"/>
+            <classpath path="classes/"/>
+        </javac>
+    </target>
+    <target name="run" depends="compile" description="run millr">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath path="classes"/>
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="libraries"/>
+        </java>
+    </target>
+    <target name="run-test-Array" depends="compile,compile-test-old" description="run test">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+            <arg line="-o output -i classes/old-test/xyz/acygn/millr/TestArray.class"/>
+        </java>
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+            <arg line="-o output -i classes/old-test/xyz/acygn/millr/TestObjectSecond.class"/>
+        </java>
+        <echo message="TestArray"/>
+        <echo message="Running input program..."/>
+        <java classname="xyz.acygn.millr.old.TestArray">
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="Running output program..."/>
+        <java classname="xyz.acygn.millr.old.TestArray">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="output/old-test"/>
+            <classpath path="classes/"/>
+        </java>
+    </target>
+    <target name="run-test" depends="clean,compile,compile-test-old" description="run test">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+            <arg line="-v -o output/ -i classes/old-test"/>
+        </java>
+        <echo message="TestArray"/>
+        <echo message="Running input program..."/>
+        <java classname="xyz.acygn.millr.TestArray">
+            <classpath path="classes/old-test"/>
+            <classpath refid="libraries-and-common"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="Running output program..."/>
+        <java classname="xyz.acygn.millr.TestArray">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="output/old-test"/>
+            <classpath path="classes/"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="TestMain"/>
+        <echo message="Running input program..."/>
+        <java classname="xyz.acygn.millr.TestMain">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="classes/old-test"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="Running output program..."/>
+        <java classname="xyz.acygn.millr.TestMain">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="output/old-test"/>
+            <classpath path="classes/"/>
+        </java>
+    </target>
+    <target name="run-test multiArray" depends="compile,compile-test-old" description="run test">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="classes/"/>
+            <arg line="-o output -i classes/test/xyz/acygn/millr/old/TestMultiArray.class"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="running multiArray"/>
+        <echo message="Running input program..."/>
+        <java classname="xyz.acygn.millr.old.TestMultiArray">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="classes/test"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="Running output program..."/>
+        <java classname="xyz.acygn.millr.old._millr_TestMultiArray">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="output/"/>
+        </java>
+        <echo message="...done"/>
+    </target>
+    <target name="run-test-synchronized" depends="compile,compile-test-old" description="run test synchronized">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="classes/"/>
+            <arg line="-o output -i classes/test/xyz/acygn/millr/testsynchronized.class -i classes/test/xyz/acygn/millr/testsynchronized$newClazz.class"/>
+        </java>
+        <echo message="TestArray"/>
+        <echo message="Running input program..."/>
+        <java classname="xyz.acygn.millr.testsynchronized">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="classes/test/"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="Running output program..."/>
+        <java classname="xyz.acygn.millr.testsynchronized">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="output/"/>
+        </java>
+        <echo message="...done"/>
+    </target>
+    <target name="Test-on-mokapot" depends=" clean, compile" description="run test on Mokapot">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <arg line="-o output/ -i ../../mokapot/"/>
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+        </java>
+        <echo message="...done"/>
+    </target>
+    <target name="test-mokapot" depends="Test-on-mokapot" description="run the test runner">
+        <java classname="xyz.acygn.mokapot.test.TestMain" fork="true">
+            <classpath path="output/mokapot/classes/"/>
+            <classpath path="classes/"/>
+            <classpath path="output/mokapot/"/>
+            <classpath refid="libraries"/>
+            <jvmarg value="-Xdebug"/>
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,address=15235,suspend=n"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=/home/thomasc/Work/mokapot/src/main/resources/localhost-test.policy"/>
+        </java>
+    </target>
+    <target name="run-modified-mokapot" depends="Test-on-mokapot" description="run the server">
+        <java classname="xyz.acygn.mokapot.DistributedServer" fork="true">
+            <classpath path="output/mokapot/"/>
+            <classpath path="classes/"/>
+            <classpath path="/usr/share/java/javassist.jar"/>
+            <classpath path="/usr/share/java/objenesis.jar"/>
+            <classpath path="../Work/contrib/javassist.jar"/>
+            <classpath path="../Work/contrib/objenesis.jar"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy=../../mokapot/src/main/resources/localhost-only.policy"/>
+        </java>
+    </target>
+    <target name="doc" description="generate documentation for the public API">
+        <javadoc sourcepath="src/main/java" destdir="doc/main">
+        </javadoc>
+    </target>
+    <target name="doc-private" description="generate documentation of the project internals">
+        <javadoc sourcepath="src/main/java" destdir="doc-private/main" access="private">
+        </javadoc>
+    </target>
+    <target name="Mill" depends="compile" description="run the transformation on variable $input and $output$">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <arg line="-o ${output} -i ${input} "/>
+            <classpath path=" classes/"/>
+            <classpath path=" ${input} "/>
+        </java>
+    </target>
+    <target name="Mill jEdit " depends="clean, compile" description="run millr on ArtOfIllusion">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <arg line="-o output/jedit -i ../jEdit "/>
+            <classpath path="classes/"/>
+            <classpath path="../mokapot/classes/"/>
+            <classpath path="classes/"/>
+        </java>
+    </target>
+    <target name="Test-on-mokapot-jar" depends=" clean, compile" description="run test on Mokapot">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+		<arg line="-o output/mokapot/ -i ../build-output/mokapot.jar"/>          
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+            <classpath path="/usr/share/java/javassist.jar"/>
+            <classpath path="/usr/share/java/objenesis.jar"/>
+            <classpath path="./contrib/javassist.jar"/>
+            <classpath path="./contrib/objenesis.jar"/>
+        </java>
+        <echo message="...done"/>
+    </target>
+    <target name="compile-benchmark" depends="compile" description="compile the test source code">
+        <mkdir dir="classes/benchmark"/>
+        <javac includeantruntime="false" srcdir="src/benchmark/java/" destdir="classes/benchmark" debug="true">
+            <classpath refid="libraries-and-common"/>
+            <sourcepath refid="libraries"/>
+        </javac>
+    </target>
+    <target name="run-test-Marcello" depends="compile,compile-benchmark" description="run test">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+            <arg line="-o output -i classes/benchmark/"/>
+        </java>
+        <echo message="TestArray"/>
+        <echo message="Running input program..."/>
+        <java classname="xyz.acygn.millr.ArrayInitializations">
+            <classpath path="classes/benchmark/"/>
+            <classpath refid="libraries-and-common"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="Running output program..."/>
+        <java classname="xyz.acygn.millr._millr_ArrayInitializations">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="output/"/>
+            <classpath path="classes/"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="TestMain"/>
+        <echo message="Running input program..."/>
+        <java classname="xyz.acygn.millr.MillableArraysExample">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="classes/benchmark"/>
+        </java>
+        <echo message="...done"/>
+        <echo message="Running output program..."/>
+        <java classname="xyz.acygn.millr._millr_MillableArraysExample">
+            <classpath refid="libraries-and-common"/>
+            <classpath path="output/"/>
+            <classpath path="classes/"/>
+        </java>
+        <echo message="...done"/>
+    </target>
+    <target name="run-corearrayanalysis-on-Millr" depends="compile" description="run test">
+        <java classname="xyz.acygn.millr.CoreArrayAnalysis.CoreArrayAnalysis" fork="true">
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+            <arg line="classes"/>
+        </java>
+    </target>
+    <target name="run-correyarrayanalysis-on-Mokapot" depends="compile" description="run test">
+        <java classname="xyz.acygn.millr.CoreArrayAnalysis.CoreArrayAnalysis" fork="true">
+            <classpath refid="libraries-and-common"/>
+            <arg line="../../mokapot/classes"/>
+        </java>
+    </target>
+    <target name="run-test-failure" depends="compile,compile-test-old" description="run test">
+        <java classname="xyz.acygn.millr.Mill" fork="true">
+            <classpath path="classes/"/>
+            <classpath refid="libraries-and-common"/>
+            <arg line="-o output -i classes/old-test/xyz/acygn/millr/NestedArrayComesFromClassFailureExample2.class classes/old-test/xyz/acygn/millr/NestedArrayComesFromClassFailureExample.class -f -v"/>
+        </java>
+        <echo message="Done"/>
+    </target>
+</project>

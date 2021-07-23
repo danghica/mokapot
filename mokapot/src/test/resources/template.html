@@ -1,0 +1,79 @@
+<!-- This template is read in by the main Runner procedure of the benchmarking script,
+and subsequently converted into a string that is manipulated to generate the final table. -->
+
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Mokapot test data</title>
+
+    <style>
+        tbody > tr:nth-of-type(3n) {
+            background-color: #CC99FF;
+        }
+
+        tbody > tr:nth-of-type(3n + 1) {
+            background-color: #FFFFFF;
+        }
+
+        tbody > tr:nth-of-type(3n + 2) {
+            background-color: #99CC00;
+        }
+
+        tbody :nth-child(3n) td {
+            border-bottom: 3px solid #000;
+        }
+
+        td {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 3px solid #000;
+        }
+    </style>
+
+</head>
+
+<body>
+<h1>Generated on: $generated</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Program</th>
+            <th>Distribution Iterations</th>
+            <th>Execution Iterations</th>
+            <th><i>avg(distribution)</i>, μs +-1μs</th>
+            <th><i>avg(distribution) ratio to RMI</i></th>
+            <th><i>max(distribution)</i>, μs +-1μs</th>
+            <th><i>min(distribution)</i>, μs +-1μs</th>
+            <th><i>stddev(distribution)</i>, μs</th>
+            <th><i>avg(execution)</i>, μs +-1μs</th>
+            <th><i>avg(execution) ratio to RMI</i></th>
+            <th><i>max(execution)</i>, μs +-1μs</th>
+            <th><i>min(execution)</i>, μs +-1μs</th>
+            <th><i>stddev(execution)</i>, μs</th>
+        </tr>
+    </thead>
+    <tbody>
+        $nextRow
+    </tbody>
+</table>
+
+<p>
+    A few notes on the data collection process:
+<ul>
+    <li>The uncertainty of any single time measurement is assumed to be +-1μ.</li>
+    <li>The uncertainty of the average is taken following the classic "when measurements add, their
+        uncertainties add" rule of thumb. When taking the average of measurements with the same
+        uncertainty this simplifies to the average having the same uncertainty as the values themselves.
+        This approach is based on the assumption that the measured values are <i>accurate</i> though not
+        necessarily precise, and thus the correct values are within +-1μ of the measured values.
+    </li>
+</ul>
+</p>
+</body>
+</html>

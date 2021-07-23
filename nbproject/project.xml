@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.ant.freeform</type>
+    <configuration>
+        <general-data xmlns="http://www.netbeans.org/ns/freeform-project/1">
+            <name>mokapot-combined</name>
+        </general-data>
+        <general-data xmlns="http://www.netbeans.org/ns/freeform-project/2">
+            <!-- Do not use Project Properties customizer when editing this file manually. 
+ To prevent the customizer from showing, create nbproject/project.properties file and enter 
+auxiliary.show.customizer=false 
+property there. Adding 
+auxiliary.show.customizer.message=<message>
+ will show your customized message when someone attempts to open the customizer.  -->
+            <name>mokapot-combined</name>
+            <properties/>
+            <folders>
+                <source-folder>
+                    <label>mokapot-combined</label>
+                    <location>.</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>common/src/main/java</label>
+                    <type>java</type>
+                    <location>common/src/main/java</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>mokapot/src/main/java</label>
+                    <type>java</type>
+                    <location>mokapot/src/main/java</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>mokapot/src/whitelist/java</label>
+                    <type>java</type>
+                    <location>mokapot/src/whitelist/java</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>mokapot/src/test/java</label>
+                    <type>java</type>
+                    <location>mokapot/src/test/java</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>mokapot/src/benchmark/java</label>
+                    <type>java</type>
+                    <location>mokapot/src/benchmark/java</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>millr/src/main/java</label>
+                    <type>java</type>
+                    <location>millr/src/main/java</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>millr/src/test</label>
+                    <type>java</type>
+                    <location>millr/src/test</location>
+                    <includes>**/*.java</includes>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>millr/src/benchmark/java</label>
+                    <type>java</type>
+                    <location>millr/src/benchmark/java</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>millr/src/old-test</label>
+                    <type>java</type>
+                    <location>millr/src/old-test</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+            </folders>
+            <ide-actions>
+                <action name="build">
+                    <target>compile-all-with-tests</target>
+                </action>
+                <action name="clean">
+                    <target>clean</target>
+                </action>
+                <action name="javadoc">
+                    <target>doc-private</target>
+                </action>
+                <action name="test-millr">
+                    <target>test-mokapotsemantics</target>
+                </action>
+                <action name="test-mokapot">
+                    <target>test-mokapot-light</target>
+                </action>
+                <action name="rebuild">
+                    <target>clean</target>
+                    <target>compile-all-with-tests</target>
+                </action>
+                <action name="profile">
+                    <script>nbproject/ide-file-targets.xml</script>
+                    <target>profile-nb</target>
+                </action>
+                <action name="run.single">
+                    <script>nbproject/ide-file-targets.xml</script>
+                    <target>run-selected-file-in-java</target>
+                    <context>
+                        <property>run.class</property>
+                        <folder>millr/src/test/java</folder>
+                        <pattern>\.java$</pattern>
+                        <format>java-name</format>
+                        <arity>
+                            <one-file-only/>
+                        </arity>
+                    </context>
+                </action>
+                <action name="test.single">
+                    <script>build.xml</script>
+                    <target>test-single</target>
+                    <context>
+                        <property>test.class</property>
+                        <folder>millr/src/test/java</folder>
+                        <pattern>\.java$</pattern>
+                        <format>java-name</format>
+                        <arity>
+                            <one-file-only/>
+                        </arity>
+                    </context>
+                </action>
+            </ide-actions>
+            <export>
+                <type>folder</type>
+                <location>build-output/classes-common</location>
+                <build-target>compile-all-with-tests</build-target>
+            </export>
+            <export>
+                <type>folder</type>
+                <location>build-output/classes-mokapot</location>
+                <build-target>compile-all-with-tests</build-target>
+            </export>
+            <export>
+                <type>folder</type>
+                <location>build-output/classes-whitelist</location>
+                <build-target>compile-all-with-tests</build-target>
+            </export>
+            <export>
+                <type>folder</type>
+                <location>build-output/classes-millr</location>
+                <build-target>compile-all-with-tests</build-target>
+            </export>
+            <export>
+                <type>folder</type>
+                <location>build-internal/classes</location>
+                <build-target>compile-all-with-tests</build-target>
+            </export>
+            <view>
+                <items>
+                    <source-folder style="packages">
+                        <label>common/src/main/java</label>
+                        <location>common/src/main/java</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>mokapot/src/main/java</label>
+                        <location>mokapot/src/main/java</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>mokapot/src/test/java</label>
+                        <location>mokapot/src/test/java</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>mokapot/src/whitelist/java</label>
+                        <location>mokapot/src/whitelist/java</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>mokapot/src/benchmark/java</label>
+                        <location>mokapot/src/benchmark/java</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>millr/src/main/java</label>
+                        <location>millr/src/main/java</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>millr/src/benchmark</label>
+                        <location>millr/src/benchmark</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>millr/src/old-test</label>
+                        <location>millr/src/old-test</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>millr/src/test</label>
+                        <location>millr/src/test</location>
+                        <includes>**/*.java</includes>
+                    </source-folder>
+                    <source-file>
+                        <location>build.xml</location>
+                    </source-file>
+                </items>
+                <context-menu>
+                    <ide-action name="build"/>
+                    <ide-action name="rebuild"/>
+                    <ide-action name="clean"/>
+                    <ide-action name="javadoc"/>
+                    <ide-action name="test-mokapot"/>
+                    <ide-action name="test-millr"/>
+                    <ide-action name="profile"/>
+                </context-menu>
+            </view>
+            <subprojects/>
+        </general-data>
+        <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/4">
+            <compilation-unit>
+                <package-root>common/src/main/java</package-root>
+                <classpath mode="compile">contrib/asm-all.jar:contrib/asm-analysis.jar:contrib/asm-commons.jar:contrib/asm-tree.jar:contrib/asm-util.jar:contrib/asm.jar:/usr/share/java/asm-all.jar</classpath>
+                <built-to>build-output/classes-common</built-to>
+                <javadoc-built-to>build-internal/doc</javadoc-built-to>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>mokapot/src/main/java</package-root>
+                <classpath mode="compile">build-output/classes-common:contrib/asm-all.jar:contrib/asm-analysis.jar:contrib/asm-commons.jar:contrib/asm-tree.jar:contrib/asm-util.jar:contrib/asm.jar:contrib/javassist.jar:contrib/javassist.zip:contrib/objenesis.jar:contrib/objenesis.zip:/usr/share/java/asm-all.jar:/usr/share/java/javassist.jar:/usr/share/java/objenesis.jar</classpath>
+                <built-to>build-output/classes-mokapot</built-to>
+                <javadoc-built-to>build-internal/doc</javadoc-built-to>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>mokapot/src/whitelist/java</package-root>
+                <classpath mode="compile">build-output/classes-common</classpath>
+                <built-to>build-output/classes-whitelist</built-to>
+                <javadoc-built-to>build-internal/doc</javadoc-built-to>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>mokapot/src/test/java</package-root>
+                <classpath mode="compile">build-output/classes-common:build-output/classes-mokapot:build-output/classes-whitelist:contrib/objenesis.jar:/usr/share/java/objenesis.jar</classpath>
+                <built-to>build-internal/classes</built-to>
+                <javadoc-built-to>build-internal/doc</javadoc-built-to>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>mokapot/src/benchmark/java</package-root>
+                <classpath mode="compile">build-output/classes-common:build-output/classes-mokapot:build-output/classes-whitelist</classpath>
+                <built-to>build-internal/classes</built-to>
+                <javadoc-built-to>build-internal/doc</javadoc-built-to>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>millr/src/main/java</package-root>
+                <classpath mode="compile">build-output/classes-common:contrib/asm-all.jar:contrib/asm-analysis.jar:contrib/asm-commons.jar:contrib/asm-tree.jar:contrib/asm-util.jar:contrib/asm.jar:contrib/javassist.jar:contrib/javassist.zip:contrib/junit.jar:contrib/objenesis.jar:contrib/objenesis.zip:contrib/retrolambda.jar:contrib/bsh-2.0b4.jar:contrib/junit-platform-launcher.jar:/usr/share/java/asm-all.jar:/usr/share/java/objenesis-2.6.jar:/usr/share/java/ant.jar</classpath>
+                <built-to>build-output/classes-millr</built-to>
+                <javadoc-built-to>build-internal/doc</javadoc-built-to>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>millr/src/benchmark/java</package-root>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>millr/src/old-test</package-root>
+                <classpath mode="compile">build-output/classes-common:contrib/ant-junit.jar:contrib/asm-all.jar:contrib/javassist.jar:contrib/junit-4.12.jar:contrib/objenesis.jar:/usr/share/java/asm-all.jar:/usr/share/java/javassist.jar:/usr/share/java/objenesis.jar</classpath>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>millr/src/test/java</package-root>
+                <unit-tests/>
+                <classpath mode="compile">build-output/classes-millr:build-output/classes-mokapot:contrib:contrib/asm.jar:contrib/asm-all.jar:contrib/asm-analysis.jar:contrib/asm-commons.jar:contrib/asm-tree.jar:contrib/asm-util.jar:contrib/asm.jar:contrib/javassist.jar:contrib/javassist.zip:contrib/junit.jar:contrib/objenesis.jar:contrib/objenesis.zip:contrib/retrolambda.jar:build-output/classes-common:/usr/share/java/asm-all.jar:/usr/share/java/javassist.jar:/usr/share/java/objenesis.jar</classpath>
+                <source-level>1.8</source-level>
+            </compilation-unit>
+        </java-data>
+    </configuration>
+</project>
