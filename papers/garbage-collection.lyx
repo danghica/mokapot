@@ -1,0 +1,1392 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{amssymb,stmaryrd}
+\usepackage{bussproofs}
+\usepackage[figure]{hypcap}
+\end_preamble
+\use_default_options true
+\begin_modules
+theorems-ams
+eqs-within-sections
+figs-within-sections
+fix-cm
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 1
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_author "Alex Smith"
+\pdf_bookmarks true
+\pdf_bookmarksnumbered true
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 3
+\pdf_breaklinks false
+\pdf_pdfborder true
+\pdf_colorlinks false
+\pdf_backref page
+\pdf_pdfusetitle true
+\papersize a4paper
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\cat}{::}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\kleene}[1]{#1^{*}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Notation
+\end_layout
+
+\begin_layout Itemize
+For any set 
+\begin_inset Formula $A$
+\end_inset
+
+, let 
+\begin_inset Formula $\kleene A$
+\end_inset
+
+ be the set of all finite sequences of elements of 
+\begin_inset Formula $A$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ is the empty sequence.
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $x\cat y$
+\end_inset
+
+ be the concatenation of the sequences 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $y$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+To avoid confusion, sequences consisting of a single element 
+\begin_inset Formula $e$
+\end_inset
+
+ will be written as 
+\begin_inset Formula $e\cat\epsilon$
+\end_inset
+
+ rather than just 
+\begin_inset Formula $e$
+\end_inset
+
+ on its own.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\langle x,y\rangle$
+\end_inset
+
+ represents a pair of 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $y$
+\end_inset
+
+ (i.e.
+ 
+\begin_inset Formula $\forall x\in A.\forall y\in B.\langle x,y\rangle\in A\times B$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Section
+The semantics of object-oriented programming
+\end_layout
+
+\begin_layout Standard
+To prove results about object-oriented languages, we first need a semantics
+ so that we can define how the language behaves.
+ The formalization of object-oriented languages we use is a 
+\emph on
+message-passing 
+\emph default
+system, as is used in practice by languages such as Smalltalk: each object
+ exists in isolation, and interacts with other objects only by sending messages
+ to them and receiving messages from them.
+ Objects refer to each other using names known as 
+\emph on
+references
+\emph default
+.
+ Our semantics hides the details of how objects operate, treating them as
+ state machines; the denotation of such a state machine is an 
+\emph on
+interactive function
+\emph default
+.
+ The following definitions capture the relationship between state machines
+ and their denotations:
+\end_layout
+
+\begin_layout Definition
+A function 
+\begin_inset Formula $f:\kleene D\rightarrow\kleene C$
+\end_inset
+
+ is defined to be 
+\emph on
+interactive
+\emph default
+ if, for all 
+\begin_inset Formula $x,x'\in\kleene D$
+\end_inset
+
+ such that 
+\begin_inset Formula $x'$
+\end_inset
+
+ is a prefix of 
+\begin_inset Formula $x$
+\end_inset
+
+, 
+\begin_inset Formula $f(x')$
+\end_inset
+
+ is a prefix of 
+\begin_inset Formula $f(x)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+For each interactive function 
+\begin_inset Formula $f:\kleene D\rightarrow\kleene C$
+\end_inset
+
+, and every 
+\begin_inset Formula $x,y\in\kleene D$
+\end_inset
+
+, define the 
+\emph on
+reaction
+\emph default
+ 
+\begin_inset Formula $f_{x}(y)$
+\end_inset
+
+ as the unique string 
+\begin_inset Formula $z$
+\end_inset
+
+ such that 
+\begin_inset Formula $f(x\cat y)=f(x)\cat z$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+For each interactive function 
+\begin_inset Formula $f:\kleene D\rightarrow\kleene C$
+\end_inset
+
+, define an equivalence relation 
+\begin_inset Formula $\asymp_{f}$
+\end_inset
+
+ on elements of 
+\begin_inset Formula $\kleene D$
+\end_inset
+
+ such that 
+\begin_inset Formula $x\asymp_{f}x'$
+\end_inset
+
+ if and only if 
+\begin_inset Formula $\forall y\in\kleene D.f_{x}(y)=f_{x'}(y)$
+\end_inset
+
+ (i.e.
+\begin_inset space \space{}
+\end_inset
+
+
+\begin_inset Formula $\forall y\in\kleene D.f(x\cat y)=f(x'\cat y)$
+\end_inset
+
+).
+ We define a 
+\emph on
+state
+\emph default
+ 
+\begin_inset Formula $S$
+\end_inset
+
+ of 
+\begin_inset Formula $f$
+\end_inset
+
+ as an equivalence set of elements of 
+\begin_inset Formula $\kleene D$
+\end_inset
+
+ under this relation (i.e.
+ the set of states of 
+\begin_inset Formula $f$
+\end_inset
+
+ is 
+\begin_inset Formula $\kleene D/\asymp_{f}$
+\end_inset
+
+); and we define the reaction 
+\begin_inset Formula $f_{S}(y)$
+\end_inset
+
+ as the shared value of 
+\begin_inset Formula $f_{x}(y)$
+\end_inset
+
+ for all 
+\begin_inset Formula $x\in S$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+A state 
+\begin_inset Formula $S\in\kleene D/\asymp_{f}$
+\end_inset
+
+ of an interactive function 
+\begin_inset Formula $f:\kleene D\rightarrow\kleene C$
+\end_inset
+
+, is defined to be a 
+\emph on
+halt state
+\emph default
+ if 
+\begin_inset Formula $\forall y.f_{S}(y)=\epsilon$
+\end_inset
+
+.
+ An interactive function can have at most one halt state; the halt state
+ of an interactive function 
+\begin_inset Formula $f$
+\end_inset
+
+ (if it exists) is written as 
+\begin_inset Formula $\Omega_{f}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The halt state of an object represents a situation in which it forever fails
+ to respond to messages; as such, we use this to mathematically model the
+ behaviour of deallocated objects.
+ We will eventually be trying to prove properties such as 
+\begin_inset Quotes eld
+\end_inset
+
+with a particular construction for object-oriented programs, messages are
+ never sent to deallocated objects
+\begin_inset Quotes erd
+\end_inset
+
+, and will model that via requiring that messages are never sent to objects
+ in halt state.
+\end_layout
+
+\begin_layout Standard
+In order to model a message-passing semantics, we need a concrete definition
+ of a message.
+ Each message consists of a 
+\emph on
+tag
+\emph default
+ (which allows distinguishing between different types of methods; a tag
+ is comparable to a method name or an entry in an interface), and some number
+ of 
+\emph on
+arguments
+\emph default
+ (which are object references).
+ Objects can send messages to other objects, or construct objects (and have
+ a message sent back to them listing the reference of the new object); in
+ order to avoid a circular definition, we use a separate set of 
+\begin_inset Quotes eld
+\end_inset
+
+class names
+\begin_inset Quotes erd
+\end_inset
+
+ to select the class of object that's being created (along with a tag to
+ specify which message to send back).
+ Formally, that looks like this:
+\end_layout
+
+\begin_layout Definition
+\begin_inset CommandInset label
+LatexCommand label
+name "def:set-of-messages"
+
+\end_inset
+
+Given a set of tags 
+\begin_inset Formula $T$
+\end_inset
+
+ and a set of object references 
+\begin_inset Formula $\mathbb{A}$
+\end_inset
+
+, we define the set of 
+\emph on
+messages
+\emph default
+ 
+\begin_inset Formula $M=\{\langle\tau,\overline{a}\rangle|\tau\in T,\overline{a}\in\kleene{\mathbb{A}}\}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+\begin_inset CommandInset label
+LatexCommand label
+name "def:output-messages"
+
+\end_inset
+
+Given a set of tags 
+\begin_inset Formula $T$
+\end_inset
+
+, a set of object references 
+\begin_inset Formula $\mathbb{A}$
+\end_inset
+
+, and a set of class names 
+\begin_inset Formula $K$
+\end_inset
+
+, we define an 
+\emph on
+addressed message
+\emph default
+ as a pair 
+\begin_inset Formula $\langle a,m\rangle$
+\end_inset
+
+ for 
+\begin_inset Formula $a\in\mathbb{A}$
+\end_inset
+
+, 
+\begin_inset Formula $m\in M$
+\end_inset
+
+; and a 
+\emph on
+constructor call
+\emph default
+ as a pair 
+\begin_inset Formula $\langle k,\tau\rangle$
+\end_inset
+
+ for 
+\begin_inset Formula $k\in K$
+\end_inset
+
+, 
+\begin_inset Formula $\tau\in T$
+\end_inset
+
+.
+ We call the disjoint union of the set of addressed messages and the set
+ of constructor calls 
+\begin_inset Formula $E$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We do not model the properties of an object directly; rather, we look only
+ at an object's message-passing behaviour.
+ Informally, we define one object as referencing another if it is capable
+ of sending messages to it or sending messages about it, without being given
+ that reference by a message.
+ More formally, that looks like this:
+\end_layout
+
+\begin_layout Definition
+We define a message 
+\begin_inset Formula $m\in M$
+\end_inset
+
+ as 
+\emph on
+referencing
+\emph default
+ a reference 
+\begin_inset Formula $a\in\mathbb{A}$
+\end_inset
+
+ if 
+\begin_inset Formula $m=\langle\tau,\overline{a}\rangle$
+\end_inset
+
+ and 
+\begin_inset Formula $a$
+\end_inset
+
+ appears anywhere in the sequence 
+\begin_inset Formula $\overline{a}$
+\end_inset
+
+.
+ Likewise, we define an addressed message 
+\begin_inset Formula $\langle a',m\rangle$
+\end_inset
+
+ as referencing 
+\begin_inset Formula $a$
+\end_inset
+
+ if 
+\begin_inset Formula $a'=a$
+\end_inset
+
+ or 
+\begin_inset Formula $m$
+\end_inset
+
+ references 
+\begin_inset Formula $a$
+\end_inset
+
+.
+ Constructor calls do not reference any reference.
+ The notation 
+\begin_inset Formula $a\#m$
+\end_inset
+
+ means 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $a$
+\end_inset
+
+ is not referenced by 
+\begin_inset Formula $m$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+; this generalizes to sequences, i.e.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset Formula $a\#x$
+\end_inset
+
+ for 
+\begin_inset Formula $x\in\kleene M$
+\end_inset
+
+ means 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $a$
+\end_inset
+
+ is not referenced by any element of 
+\begin_inset Formula $x$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+For each interactive function 
+\begin_inset Formula $f:\kleene M\rightarrow\kleene E$
+\end_inset
+
+, state 
+\begin_inset Formula $S\in\kleene M/\asymp_{f}$
+\end_inset
+
+, and reference 
+\begin_inset Formula $a\in\mathbb{A}$
+\end_inset
+
+, we define 
+\begin_inset Formula $S$
+\end_inset
+
+ as referencing 
+\begin_inset Formula $a$
+\end_inset
+
+ if there is a sequence 
+\begin_inset Formula $y\in\kleene M$
+\end_inset
+
+ such that no element of 
+\begin_inset Formula $y$
+\end_inset
+
+ references 
+\begin_inset Formula $a$
+\end_inset
+
+, but some addressed message element of 
+\begin_inset Formula $f_{S}(y)$
+\end_inset
+
+ references 
+\begin_inset Formula $a$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+To be able to reason about the behaviour of objects, we need them to avoid
+ behaviour that varies based on the specific references they're given as
+ arguments, and avoid mentioning references they haven't been told about:
+\end_layout
+
+\begin_layout Definition
+We define an interactive function 
+\begin_inset Formula $f:\kleene M\rightarrow\kleene E$
+\end_inset
+
+as 
+\emph on
+strongly encapsulated
+\emph default
+ if 
+\begin_inset Formula $\forall a,a'\in\mathbb{A}.\forall x\in\kleene M.f(x[a\backslash a'])=f(x)[a\backslash a']$
+\end_inset
+
+ (where the replacement 
+\begin_inset Formula $[a\backslash a']$
+\end_inset
+
+ replaces even copies of 
+\begin_inset Formula $a$
+\end_inset
+
+ nested deeply within structures, i.e.
+ it can replace both addresses and message arguments).
+ We define an interactive function 
+\begin_inset Formula $f:\kleene M\rightarrow\kleene E$
+\end_inset
+
+as 
+\emph on
+weakly encapsulated
+\emph default
+ if 
+\begin_inset Formula $\forall a,a'\in\mathbb{A}.\forall x\in\kleene M$
+\end_inset
+
+, 
+\begin_inset Formula $f(x[a\backslash a'])=f(x)[a\backslash a']$
+\end_inset
+
+ whenever 
+\begin_inset Formula $a'\#x$
+\end_inset
+
+ (i.e.
+\begin_inset space ~
+\end_inset
+
+the same as the definition for strong encapsulation, except that the replacement
+ reference must be fresh).
+\end_layout
+
+\begin_layout Lemma
+For a (strongly or weakly) encapsulated interactive function 
+\begin_inset Formula $f:\kleene M\rightarrow\kleene E$
+\end_inset
+
+ and sequence of messages 
+\begin_inset Formula $x\in\kleene M$
+\end_inset
+
+, every reference 
+\begin_inset Formula $a\in\mathbb{A}$
+\end_inset
+
+ referenced by 
+\begin_inset Formula $f(x)$
+\end_inset
+
+ must be referenced in 
+\begin_inset Formula $x$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Proof
+We prove that for all 
+\begin_inset Formula $x\in\kleene M$
+\end_inset
+
+, 
+\begin_inset Formula $a\in\mathbb{A}$
+\end_inset
+
+, that 
+\begin_inset Formula $a\#x$
+\end_inset
+
+ implies 
+\begin_inset Formula $a\#f(x)$
+\end_inset
+
+.
+ 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $f(x)$
+\end_inset
+
+ are finitely long (by the definitions of 
+\begin_inset Formula $\kleene M$
+\end_inset
+
+ and 
+\begin_inset Formula $\kleene E$
+\end_inset
+
+), but 
+\begin_inset Formula $\mathbb{A}$
+\end_inset
+
+ is infinite, so we can identify an arbitrary 
+\begin_inset Formula $a'\neq a\in\mathbb{A}$
+\end_inset
+
+ such that 
+\begin_inset Formula $a'\#x\wedge a'\#f(x)$
+\end_inset
+
+.
+ Now we have:
+\end_layout
+
+\begin_layout Proof
+\begin_inset Formula 
+\begin{eqnarray*}
+f(x) & = & f(x[a\backslash a'])\quad\text{(because \ensuremath{a\#x}, so the replacement does nothing)}\\
+ & = & f(x)[a\backslash a']\quad\text{(because \ensuremath{f} is encapsulated and \ensuremath{a'\#x})}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Proof
+and thus 
+\begin_inset Formula $f(x)=f(x)[a\backslash a']$
+\end_inset
+
+ and 
+\begin_inset Formula $a\neq a'$
+\end_inset
+
+, which together imply 
+\begin_inset Formula $a\#f(x)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We can describe the state of a running program via the program itself (i.e.
+\begin_inset space ~
+\end_inset
+
+the set of 
+\begin_inset Quotes eld
+\end_inset
+
+classes
+\begin_inset Quotes erd
+\end_inset
+
+, i.e.
+\begin_inset space ~
+\end_inset
+
+the set of state machines that can be used to represent objects, without
+ their actual state), plus the set of objects that exist and their names,
+ plus the state of each object:
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+program history
+\emph default
+ consists of a tuple 
+\begin_inset Formula $\langle T,K,\mathbb{A},F,O,Q\rangle$
+\end_inset
+
+, where 
+\begin_inset Formula $T$
+\end_inset
+
+ is the set of tags, 
+\begin_inset Formula $K$
+\end_inset
+
+ is the set of class names,
+\begin_inset Formula $\mathbb{A}$
+\end_inset
+
+ is an infinite set of all possible object references, 
+\begin_inset Formula $F$
+\end_inset
+
+ (the class definitions) is a function from 
+\begin_inset Formula $F$
+\end_inset
+
+ to interactive functions 
+\begin_inset Formula $\kleene M\rightarrow\kleene E$
+\end_inset
+
+ (with 
+\begin_inset Formula $M$
+\end_inset
+
+ and 
+\begin_inset Formula $E$
+\end_inset
+
+ defined from 
+\begin_inset Formula $T$
+\end_inset
+
+, 
+\begin_inset Formula $K$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbb{A}$
+\end_inset
+
+ as in Definitions 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "def:set-of-messages"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "def:output-messages"
+
+\end_inset
+
+), 
+\begin_inset Formula $O$
+\end_inset
+
+ (the objects and their histories) is a partial function from 
+\begin_inset Formula $\mathbb{A}$
+\end_inset
+
+ to pairs 
+\begin_inset Formula $K\times\kleene M$
+\end_inset
+
+ (i.e.
+\begin_inset space ~
+\end_inset
+
+each object has a class, and a history of messages that have been sent to
+ it, determining its state), and 
+\begin_inset Formula $Q$
+\end_inset
+
+ (the set of queued messages) is a multiset of addressed messages 
+\begin_inset Formula $\langle a,m\rangle$
+\end_inset
+
+ (with 
+\begin_inset Formula $a\in\mathbb{A}$
+\end_inset
+
+, 
+\begin_inset Formula $m\in M$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+For fixed 
+\begin_inset Formula $T$
+\end_inset
+
+, 
+\begin_inset Formula $K$
+\end_inset
+
+, 
+\begin_inset Formula $\mathbb{A},$
+\end_inset
+
+
+\begin_inset Formula $F$
+\end_inset
+
+, we define an equivalence relation 
+\begin_inset Formula $\sim$
+\end_inset
+
+ on pairs 
+\begin_inset Formula $K\times\kleene M$
+\end_inset
+
+ such that 
+\begin_inset Formula $\langle k,x\rangle\not\sim\langle k',x'\rangle$
+\end_inset
+
+ whenever 
+\begin_inset Formula $k\neq k'$
+\end_inset
+
+, and 
+\begin_inset Formula $\langle k,x\rangle\sim\langle k,x'\rangle$
+\end_inset
+
+ iff 
+\begin_inset Formula $x\asymp_{F(k)}x'$
+\end_inset
+
+.
+ (In other words, two individual objects are 
+\begin_inset Formula $\sim$
+\end_inset
+
+-equivalent if they belong to the same class and their histories put them
+ into the same state, even if their histories differ from each other.) We
+ extend this relation to program histories such that 
+\begin_inset Formula $\langle T,K,\mathbb{A},F,O,Q\rangle\sim\langle T,K,\mathbb{A},F,O',Q\rangle$
+\end_inset
+
+ if and only if 
+\begin_inset Formula $O$
+\end_inset
+
+ and 
+\begin_inset Formula $O'$
+\end_inset
+
+ are defined on the same set 
+\begin_inset Formula $A\subseteq\mathbb{A}$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall a\in A.O(a)\sim O'(a)$
+\end_inset
+
+.
+ A 
+\emph on
+program state
+\emph default
+ is then a 
+\begin_inset Formula $\sim$
+\end_inset
+
+-equivalence set of program histories.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+For a program history 
+\begin_inset Formula $H=\langle T,K,\mathbb{A},F,O,Q\rangle$
+\end_inset
+
+, we define 
+\begin_inset Formula $a\#H$
+\end_inset
+
+ if 
+\begin_inset Formula $O$
+\end_inset
+
+ is not defined at 
+\begin_inset Formula $a$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We can now describe how a program can evolve.
+ In order to be able to model concurrency (including effects such as race
+ conditions), we use a delay-insensitive model of message passing: if there
+ are multiple queued messages (whether to the same object or to different
+ objects), they might be received and thus processed in any order.
+ As such, results about the behaviour of a program are results about what
+ 
+\emph on
+could
+\emph default
+ happen (which we can then negate to prove that undesirable behaviours are
+ impossible, regardless of any potential non-determinism due to race conditions).
+\end_layout
+
+\begin_layout Definition
+We define a relation 
+\begin_inset Formula $\Rightarrow_{\langle a,m\rangle}$
+\end_inset
+
+ on program histories (where 
+\begin_inset Formula $H\Rightarrow_{\langle a,m\rangle}H'$
+\end_inset
+
+ means 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $H$
+\end_inset
+
+ produces 
+\begin_inset Formula $H'$
+\end_inset
+
+ when the object with reference 
+\begin_inset Formula $a$
+\end_inset
+
+ processes message 
+\begin_inset Formula $m$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+), such that 
+\begin_inset Formula $\langle T,K,\mathbb{A},F,O,Q\rangle\Rightarrow\langle T,K,\mathbb{A},F,O',Q'\rangle$
+\end_inset
+
+ if and only if all the following conditions hold:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\langle a,m\rangle\in Q$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $Q'\supseteq(Q-[\langle a,m\rangle])$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\exists k.O(a)=\langle k,x\rangle\wedge O'(a)=\langle k,x\cat m\rangle$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Itemize
+For every element 
+\begin_inset Formula $a'\neq a$
+\end_inset
+
+ at which 
+\begin_inset Formula $O$
+\end_inset
+
+ is defined, 
+\begin_inset Formula $O'(a')=O(a')$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Itemize
+Defining 
+\begin_inset Formula $R={F(k)}_{x}(m\cat\epsilon)$
+\end_inset
+
+ (i.e.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset Formula $R$
+\end_inset
+
+ is the reaction of the object with reference 
+\begin_inset Formula $a$
+\end_inset
+
+ to message 
+\begin_inset Formula $m$
+\end_inset
+
+), interpreting it as a multiset rather than a sequence, and 
+\begin_inset Formula $R'$
+\end_inset
+
+ as 
+\begin_inset Formula $Q'-(Q-[\langle a,m\rangle])$
+\end_inset
+
+ (i.e.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset Formula $R'$
+\end_inset
+
+ is the set of messages newly queued as a result of processing the message),
+ there exists a set 
+\begin_inset Formula $M'$
+\end_inset
+
+ of triples 
+\begin_inset Formula $\langle k',\tau',a'\rangle$
+\end_inset
+
+ such that:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+For each such triple 
+\begin_inset Formula $\langle k',\tau',a'\rangle$
+\end_inset
+
+, 
+\begin_inset Formula $a'\#O$
+\end_inset
+
+, but 
+\begin_inset Formula $O'(a')=\langle k',\epsilon\rangle$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Itemize
+For any two distinct elements 
+\begin_inset Formula $\langle k'_{1},\tau'_{1},a'_{1}\rangle\neq\langle k'_{2},\tau'_{2},a'_{2}\rangle\in M'$
+\end_inset
+
+, 
+\begin_inset Formula $a'_{1}\neq a'_{2}$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Itemize
+For any 
+\begin_inset Formula $a'$
+\end_inset
+
+ which is not the last element of any triple 
+\begin_inset Formula $\langle k',\tau',a'\rangle\in M$
+\end_inset
+
+, 
+\begin_inset Formula $O'(a')$
+\end_inset
+
+ is defined if and only if 
+\begin_inset Formula $O(a')$
+\end_inset
+
+ is;
+\end_layout
+
+\begin_layout Itemize
+The subset of elements of 
+\begin_inset Formula $R$
+\end_inset
+
+ that are constructor calls (rather than addressed messages) is 
+\begin_inset Formula $[\langle k',\tau'\rangle\mid\langle k',\tau',a'\rangle\in M']$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $R'=[\langle a'',\langle\tau',\overline{a'}\rangle\rangle\mid(\langle k',\tau',a'\rangle\in M'\wedge\overline{a'}=a'\cat\epsilon\wedge a''=a)\vee\langle a'',\langle\tau',\overline{a'}\rangle\rangle\in R]$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Standard
+The intuition behind this definition is that after processing an addressed
+ message, that message is removed from the multiset of queued messages,
+ and the newly added messages are all the addressed messages in the object's
+ reaction to the message, plus a message informing the object about each
+ object it constructed.
+ 
+\begin_inset Formula $M'$
+\end_inset
+
+ is the set of constructed objects, which need to be consistent in three
+ places: the set of constructor calls in the reaction 
+\begin_inset Formula $R$
+\end_inset
+
+, the set of object references defined in 
+\begin_inset Formula $O'$
+\end_inset
+
+ but not 
+\begin_inset Formula $O$
+\end_inset
+
+, and the set of messages informing 
+\begin_inset Formula $a$
+\end_inset
+
+ about the objects it constructed.
+ (Additionally, we need to make sure that the object references used to
+ identify the newly constructed objects are fresh.)
+\end_layout
+
+\begin_layout Definition
+We define 
+\begin_inset Formula $H\Rightarrow H'$
+\end_inset
+
+ (meaning 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $H$
+\end_inset
+
+ can produce 
+\begin_inset Formula $H'$
+\end_inset
+
+ with one step
+\begin_inset Quotes erd
+\end_inset
+
+) whenever 
+\begin_inset Formula $H\Rightarrow_{\langle a,m\rangle}H'$
+\end_inset
+
+ for some addressed message 
+\begin_inset Formula $\langle a,m\rangle$
+\end_inset
+
+.
+ We define 
+\begin_inset Formula $\Rightarrow^{*}$
+\end_inset
+
+ as the transitive and reflexive closure of 
+\begin_inset Formula $\Rightarrow$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Garbage-collection definitions
+\end_layout
+
+\begin_layout Standard
+In order to prove things about a garbage-collection algorithm, we need to
+ define what it means for such an algorithm to be correct.
+ In general, there are two main properties that we want to ensure: that
+ an object will not be deallocated if it could subsequently be used, and
+ that an object will never remain allocated indefinitely if it is no longer
+ referenced.
+\end_layout
+
+\end_body
+\end_document

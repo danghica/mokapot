@@ -1,0 +1,904 @@
+\documentclass[a4paper, 11pt, english]{article}
+\author{Thomas Cuvillier}
+\usepackage{amsmath, amsthm, amssymb, graphicx, enumerate,  tikz, hyperref}
+\usepackage[style=alphabetic]{biblatex}
+\usepackage[a4paper]{geometry}
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\usepackage{dsfont}
+\usepackage{tikz-cd}
+\usepackage{stmaryrd}
+\usepackage{amsmath}
+\usepackage{amssymb} 
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{bussproofs}
+\usepackage{csquotes}
+\usepackage{listings}
+\pgfsetlayers{background,main,foreground}
+\newtheorem{thm}{Theorem}
+\newtheorem*{lem}{Lemma}
+\newtheorem*{clm}{Claim}
+\newtheorem*{conj}{Conjecture}
+\newtheorem*{cor}{Corollary}
+\newtheorem*{prop}{Proposition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{rem}{Remark}
+\newcommand{\Var}{\mathsf{Var}}
+\newcommand{\inherits}{\triangleleft}
+\begin{document}
+
+\section{An idealized JAVA}
+
+\newcommand{\String}{\mathsf{String}}
+We write $\String^*$ for the set of non-empty strings.
+
+Comment: I don't think we need arithmetic.
+It's not sure whether we want casting or not.
+
+\newcommand{\IdealJava}{\mathsf{WJava}}
+
+\newcommand{\class}{\mathsf{class} \;}
+\newcommand{\interface}{\mathsf{interface}}
+\newcommand{\extends}{\; \mathsf{extends} \;}
+\newcommand{\implements}{\; \mathsf{implements} \;}
+\newcommand{\object}{\mathsf{Object}}
+\newcommand{\method}{\mathsf{m}}
+\newcommand{\methodSignature}{\mathsf{msig}}
+\newcommand{\methodSet}{\mathcal{M}}
+\newcommand{\classSet}{\mathcal{C}}
+\newcommand{\interfaceSet}{\mathcal{I}}
+\newcommand{\typeSet}{\mathbb{T}}
+\newcommand{\methodSignatureSet}{MSig}
+\newcommand{\new}{\mathsf{new}}
+\newcommand{\lock}{\mathsf{lock} \;}
+\newcommand{\unlock}{\mathsf{unlock} \;}
+\newcommand{\arr}{\mathsf{arr}}
+\newcommand{\this}{\mathsf{this}}
+\newcommand{\Tree}{\mathsf{Tree}}
+\newcommand{\msig}{\mathrm{m}}
+\newcommand{\ArrayWrapper}{\mathsf{ArrayWrapper}}
+\newcommand{\lettext}{\mathsf{let} \;}
+\newcommand{\intext}{\mathsf{in} \;}
+\newcommand{\Unit}{\mathsf{Unit}}
+\newcommand{\nul}{\mathsf{null}}
+\newcommand{\return}{\mathsf{return} \;}
+\newcommand{\synchronized}{\mathsf{synchronized}}
+\newcommand{\start}{\mathsf{start}}
+\newcommand{\instanceof}{\mathsf{instanceof} \;}
+\newcommand{\iftext}{\mathsf{if} \; }
+\newcommand{\thentext}{\mathsf{then} \;}
+\newcommand{\elsetext}{\mathsf{else} \;}
+\newcommand{\visible}{\mathsf{Visible}}
+\newcommand{\nameFields}{\mathsf{nameFields}}
+\newcommand{\Boolean}{\mathbf{B}}
+\begin{tabular}{l l}
+Program  & $ P \; ::= \overline{C} \; \overline{I}$ \\
+Interfaces & $\interfaceSet \; :: = \interface{} \; I \extends I^* \{ \overline{\methodSignature} \} $\\
+Classes & $ \classSet \: ::= \class{} c \extends{} d \implements I^* \{\overline{F} \overline{\method}\} $ \\
+Fields & $ F \; ::= f: t \; \; f \in \String^*$ \\
+Types & $t \; ::= C \; \mid \; I \; \mid (t[] \mid t \neq \Unit) \; \mid \; \Unit  \; $ \\
+Expression types & $\tau \; ::= t \; \mid \; \Boolean$ \\
+Method signatures & $\methodSignature ::= m(\overline{t}):t \; \; m \in \mathsf{String}^*$ \\
+Methods & $\methodSet \; ::= \mathsf{def} \; (\synchronized)? \methodSignature \{e  \} $ \\
+Expressions & $ e \: ::=  x \; \mid x.f \; \mid \;x.f = e' \; \mid \; x.\method(\overline{e}) \;  $\\ &$ \mid \lettext t\; x = e_1 \intext e_2 \; \mid \; \start \; x$ \\ 
+& $ \mid \; \new{} \; C() \; \mid \; (t) e \; \mid \; \lock{} \; x \; $\\ & $  \mid \; \unlock{} \; x \; \mid \; \new{}\; T[i] \; \mid x[i] \; \mid \; x[i] = e \;  \mid \ ;\this$
+\\ & $ \mid x \; \instanceof t  \; \mid \iftext e \; \thentext e' \elsetext e'' \; \mid \; x == y $.
+\end{tabular}
+
+\newcommand{\Methods}{\mathcal{M}}
+\newcommand{\mtype}{\mathsf{mtype}}
+\newcommand{\name}{\mathsf{name}}
+\newcommand{\Implements}{\mathsf{Impl}}
+\newcommand{\Msig}{Msig}
+\newcommand{\Fields}{\mathsf{Fields}}
+\newcommand{\signature}{\mathsf{signature}}
+\newcommand{\m}{\mathsf{m}}
+\newcommand{\type}{\mathsf{type}}
+% CoI stands for Class for Interface
+\newcommand{\CoI}{\mathsf{D}}
+\newcommand{\fieldsFunction}{\mathsf{fieldMap}}
+\newcommand{\methodmap}{\mathsf{methodMap}}
+Given a method $\m = m(\overline{t})t\{e\}$ we write $\mtype(\m)$ for $(\overline{t}, t)$  $\name(\m)$ for $m$, $\signature(\m)$ for $m(\overline{t})t$. Given a field $f : t$, we write $\type(f)$ for $t$.
+Given a class $c = \class \; c \extends d \\ \implements I^* \{\overline{F}, M  \}$ , we define the following set  $\Methods(c) = M \sqcup \{ \m \in \Methods(d) \mid \nexists \method' \in M. \signature(\method) = \signature(\method')  \}$. By the well foundation rule for classes, $\Methods(c)$ only contains method with different names.  We define the function $\methodmap :  \name(c) \rightarrow \Methods(c)$ that to each name of a method assigns its canonically its method in $c$. We define similarly the set $\Methods(I)$ for an interface, except that this is a set of method signatures instead of a set of methods.
+
+We define $\Fields(c)$ for the set defined by recursion as $(\overline{F}, c) \sqcup \Fields(d)$, and $\Fields(\object) = \emptyset$. Given a function $F : \Fields(c) \rightarrow \mathsf{S}$, where $\mathsf{S}$ is a set, and $c \inherits d$, we write $F \downarrow_d$ for the partial function taking strings as arguments.
+
+\begin{tabular}{l}
+$F \downarrow_d (s) = \begin{cases}
+F(s, e) \; \text{ if } d \inherits e \wedge e \text{ maximal under d st.} (s, e) \in \Fields(c)\\
+\text{undefined if } \nexists d. d \inherits e . (s, e) \in \Fields(c)  \end{cases}$ 
+
+\end{tabular}
+
+We write $\nameFields(c)$ for the domain of the function $F \downarrow_c$. Given the identity function $\mathsf{id} : \Fields(c) \rightarrow \Fields(c)$, we write $\fieldsFunction_c$ for the function $\mathsf{id} \downarrow_c : \mathsf{String} \rightarrow \Fields(c)$.
+
+Note that the two sets are defined differently: methods are overriden, whereas fields are hidden. We write $c$ for the function that maps a name field or a method name to the method of $\Methods(C)$ or the field of $\Fields(C)$, the use case being clear from context.
+Given an interface $I \extends I_1, I_2,..., I_n$, we write $\Tree(I)$ for the set $\{I_1, I_2,..., I_n \} \cup \Tree(I_1) \cup ... \cup \Tree(I_n)$, and for a class $ c \extends d \implements I^*$ we define $\Tree(c) = \Tree(d) \sqcup \Tree(I*)$, where $\Tree(\object)= \{\object\}$.
+To each class we associate a function $C : \name(C) \rightarrow \Methods(C)$ that we denote $C$, and, for an interface, a method $I : \name(I) \rightarrow \methodSignature(I)$.
+\newcommand{\freeVariable}{\mathsf{fv}}
+We write $e_1 ; e_2$ for $\lettext y = e_1 \in e_2$ and $y \notin \freeVariable(e_2)$
+Also, for simplifying, we do not allow two methods to have same name in a class / interface.
+
+
+
+\begin{figure}
+\begin{tabular}{c}
+\AxiomC{$\vdash c \; \; \forall c \in P$}
+\AxiomC{$\vdash I \; \; \forall I \in P$}
+\RightLabel{WF for Programs}
+\BinaryInfC{$\vdash P$}
+\DisplayProof
+\vspace{10pt}
+\hspace{10pt}
+\AxiomC{}
+\RightLabel{WF for $\object$}
+\UnaryInfC{$\vdash \class \; \object$}
+\DisplayProof
+\vspace{10pt}
+\\
+
+\AxiomC{$\vdash I_i \; \forall i \in [1, n]$}
+\noLine
+\UnaryInfC{$I \notin \Tree(I_1) \cup... \cup \Tree(I_n)$}
+\noLine
+\UnaryInfC{$\vdash \msig \; \mid \; \forall \msig \in \overline{ \methodSignature}$}
+\noLine
+\UnaryInfC{$\vdash \forall \msig, \msig' \in \Methods(I). \msig \neq \msig' \Rightarrow \name (\msig) \neq \name (\msig')$} 
+\RightLabel{WF rule for interfaces}
+\UnaryInfC{$ \vdash \interface \; I \; \extends I_1,..., I_n \; \{\overline{ \methodSignature} \}$}
+\DisplayProof
+\vspace{10pt} \\
+
+
+
+\AxiomC{$\vdash t_1$}
+\AxiomC{...}
+\AxiomC{$\vdash t_n$}
+\AxiomC{$\vdash t'$}
+\RightLabel{WF rule for method signatures}
+\QuaternaryInfC{$\vdash m(t_1,..,t_n):t'$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$\vdash t$}
+\RightLabel{WF rule for Fields}
+\UnaryInfC{$\vdash f:t$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$\vdash d $} \AxiomC{$ \vdash I_i \;\; \forall i \in[1, n]$}
+\noLine
+\BinaryInfC{$\forall \method, \method' \in \Methods(c) . \name(\method) \neq \name(\method') \wedge C \notin \Tree(C)$}
+\noLine
+\UnaryInfC{$\forall \msig \in \Methods(I_i) \mid \exists \method \in \Methods(C) . \signature(\m) = \msig $}
+\noLine
+\UnaryInfC{$\vdash F \; \; \forall F \in Fds $ }
+\noLine
+\UnaryInfC{$\this : C \vdash \method \;\; \forall \method \in \methodSet$}
+\RightLabel{WF rule for Class}
+\UnaryInfC{ $\vdash \new \; \class \; C \extends d \implements I_1,...,I_n \{ \methodSet, Fds \} $ }
+\DisplayProof
+\vspace{10pt}
+\\
+
+\AxiomC{$ \this :  C, x_1 : t_1,...., x_n : t_n \vdash e: t' $ }
+\AxiomC{$t' \inherits t$}
+\AxiomC{$\vdash \signature(\method)$ }
+\RightLabel{WF rule for methods}
+\TrinaryInfC{$\vdash \mathsf{def} (\synchronized)? \mathit{m}(t_1,...., t_n): t \{e \} $}
+\DisplayProof
+\end{tabular}
+
+\caption{Well founded rules for $\IdealJava$}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{cc}
+
+\AxiomC{$\class \; c \; .... \in P $}
+\RightLabel{Class type}
+\UnaryInfC{$\vdash c$}
+\DisplayProof
+&
+\AxiomC{$I \in P$}
+\RightLabel{Interface type}
+\UnaryInfC{$\vdash I $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{}
+\RightLabel{Unit type}
+\UnaryInfC{$\vdash \Unit$}
+\DisplayProof
+&
+\AxiomC{$\vdash t\; \; t \neq \Unit$}
+\RightLabel{Array type}
+\UnaryInfC{$\vdash t[]$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{}
+\RightLabel{Boolean type}
+\UnaryInfC{$\vdash \Boolean$}
+\end{tabular}
+\end{center}
+\caption{Typing rules}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{cc}
+\AxiomC{}
+\RightLabel{Reflexivity}
+\UnaryInfC{$\vdash t \inherits t$}
+\DisplayProof
+&
+\AxiomC{$\vdash t \inherits t'$}
+\RightLabel{Array Functoriality}
+\UnaryInfC{$\vdash t[] \inherits t'[]$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$\CoI' \in \Tree(\CoI) $}
+\RightLabel{Inheritance}
+\UnaryInfC{$\CoI \inherits \CoI'$}
+\DisplayProof
+&
+\AxiomC{}
+\RightLabel{Array and $\object$}
+\UnaryInfC{$t[] \inherits \object$}
+\DisplayProof
+\end{tabular}
+\end{center}
+\caption{Subtyping relation}
+\end{figure}
+
+
+
+\begin{figure}
+\begin{tabular}{cc}
+\AxiomC{}
+\UnaryInfC{$\Gamma, x: t \vdash x :t$}
+\DisplayProof
+&
+\AxiomC{}
+\UnaryInfC{$\Gamma \vdash \new \; C(): C$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{ $\Gamma \vdash x: C$}
+\AxiomC{$ f \in \Fields(c) \wedge f : t $}
+\BinaryInfC{$\Gamma \vdash x. f : t $ }
+\DisplayProof
+&
+\AxiomC{$\Gamma \vdash e_1: t' \;\; \wedge \;\; t' \inherits t $} 
+\AxiomC{$\Gamma, x : t \vdash e_2 : \tau $}
+\BinaryInfC{$\Gamma \vdash \lettext t \; x= e_1 \intext e_2 : \tau $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$\Gamma \vdash x. f : t $}
+\AxiomC{$ \Gamma \vdash e: t' \wedge t' \inherits t $}
+\BinaryInfC{$\Gamma \vdash x . f = e : \Unit $}
+\DisplayProof
+&
+\AxiomC{}
+\UnaryInfC{$\Gamma \vdash \new T[i] : T[]$}
+\DisplayProof
+\vspace{10pt}
+\\
+\multicolumn{2}{c}{
+\AxiomC{$ \Gamma \vdash x : \CoI $}
+\AxiomC{$ \m \in \name(\CoI)$}
+\AxiomC{$\signature(\CoI(\m)) = \mathit{m}(t_1,..., t_n): t$}
+\AxiomC{$\Gamma \vdash e_i : t_i' \inherits t_i $ }
+\QuaternaryInfC{$\Gamma \vdash x.m(e_1,...,e_i) : t$}
+\DisplayProof
+}
+\vspace{10pt}
+\\
+
+\AxiomC{}
+\UnaryInfC{$\Gamma, x: t[] \vdash x[i] : t $}
+\DisplayProof
+&
+\AxiomC{$\Gamma \vdash x : t[] $}
+\AxiomC{$\Gamma \vdash e: t' \inherits t$}
+\BinaryInfC{$\Gamma \vdash x[i] = e : \Unit$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$\Gamma \vdash x : t $}
+\UnaryInfC{$\Gamma \vdash \lock{} \; x : \Unit$}
+\DisplayProof
+&
+\AxiomC{$\Gamma \vdash x : t$}
+\UnaryInfC{$\Gamma \vdash \unlock{} \; x : \Unit$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$\Gamma \vdash e : t'$}
+\UnaryInfC{$\Gamma \vdash (t) e : t$}
+\DisplayProof
+&
+\AxiomC{$\Gamma \vdash e: \Boolean$}
+\AxiomC{$\Gamma \vdash e' : \Unit$}
+\AxiomC{$\Gamma \vdash e'' : \Unit$}
+\TrinaryInfC{$\iftext e \; \thentext e' \elsetext e'' : \Unit$}
+\DisplayProof
+\vspace{10pt} \\
+\AxiomC{$\Gamma \vdash x : t'$}
+\AxiomC{$\vdash t$}
+\BinaryInfC{$ \Gamma \vdash x \; \instanceof  t : \Boolean$}
+\DisplayProof
+&
+\AxiomC{$\Gamma \vdash  x : t$}
+\AxiomC{$\Gamma \vdash y : t'$}
+\BinaryInfC{$\Gamma \vdash x== y : \Boolean$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$\Gamma \vdash x : c \; \wedge \exists \m \in \Methods(c). \signature(m) = \text{run}()\Unit$}
+\UnaryInfC{$\Gamma \vdash \text{start} \; x : \Unit$}
+\DisplayProof
+&
+\AxiomC{$\Gamma \vdash x : t[] \; \wedge \Gamma \vdash e : t' \; \wedge \; t' \inherits t $}
+\UnaryInfC{$\Gamma \vdash x[i] = e : \Unit$}
+\DisplayProof
+\end{tabular}
+\caption{Expression typing for $\IdealJava$}
+\end{figure}
+
+\begin{prop}
+$\Gamma \vdash e: t \wedge \Gamma \vdash e: t' \; \Rightarrow \; t=t'$
+\end{prop}
+
+
+If we want to discuss the getClass method, then we need to introduce this paragraph.
+
+
+The class Object is by definition well founded and sits as the root of the hierarchy of any class / array. It contains one single method with the following signature.
+Similarly, we have a class $class$ that extends Object.
+
+\begin{lstlisting}
+$ Class getClass()$
+\end{lstlisting}
+
+
+
+
+\newcommand{\field}{\mathsf{f}}
+\newcommand{\getter}{\mathsf{getF}}
+\newcommand{\setter}{\mathsf{setF}}
+\newcommand{\getField}{\mathsf{getField}}
+\newcommand{\fieldBis}{\mathsf{f}'}
+\newcommand{\setField}{\mathsf{setField}}
+\newcommand{\heap}{H}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\Value}{\mathcal{V}}
+\newcommand{\Objects}{\mathrm{Objects}}
+\newcommand{\Ob}{\mathcal{O}}
+
+
+We consider a countable infinite set of names $\A_l$ corresponding to locations, and another disjoint one $A_t$ corresponding to name for threads. $\Var$ is the set of variables, that we range through using the lowercases $x, y, z....$, and a distinguished one named $\this$.  We define the set of values $\Value$ to be :
+$\Value = \A \uplus \{ \nul \}$ where $\mathbf{B} = \{\mathsf{tt}, \mathsf{ff}\}$. A thread $T$ consists of three elements:
+\begin{itemize}
+\item A stack $V : \Var \rightarrow (\Value \times Type)$.
+\item An expression $e$.
+\item A name-thread $\rho$.
+\end{itemize}
+An object $\Ob$ consists of:
+\begin{itemize}
+\item A class $C$.
+\item A map $F : \Fields(C) \rightarrow \Value$.
+\item A name-thread $\rho \in \A_t$ or $\epsilon$ corresponding to the thread owning the lock of the object or $\epsilon$ if no thread owns the lock of this object.
+\end{itemize}
+or, if the object is an array:
+\begin{itemize}
+\item A type $t$ from the following grammar:
+\begin{align*}
+t :== \; C[] \; \mid \; t[]
+\end{align*}
+\item A number $l$, corresponding to the length of the array.
+\item A function $F : [1, l] \rightarrow \Value$.
+\item A name-thread $\rho$ or $\epsilon$ as for objects.
+\end{itemize}
+To simplify, even in the case of an array, we write it an object as $(t, F, \rho)$, where the length $l$ is implicit from the function $F$. In the case of an array $(t[], F, T)$, we write $\type(i) = t$, as in the case of fields.  We denote by $\Objects$ the set of objects.  A heap $\heap$ consists of a map $\heap : \A_l \rightarrow  \Objects$. A program configuration consists of a heap $\heap$ and a list of threads $\langle V, T, \rho \rangle$.
+
+\newcommand{\nullException}{\mathsf{NullPointerExp}}
+\newcommand{\exception}{\mathsf{Exp}}
+\newcommand{\castException}{\mathsf{CastException}}
+\newcommand{\ArrayException}{\mathsf{OutOfRangeException}}
+
+\begin{figure}
+\AxiomC{$\vdash T$}
+\RightLabel{Typing rule for $\nul$}
+\UnaryInfC{$ \vdash \nul : T$}
+\DisplayProof
+
+\AxiomC{$(C, F, T)$}
+\RightLabel{Typing rule for an object}
+\UnaryInfC{$\vdash (C, T, F) : T \in \Tree(C)$ }
+\DisplayProof
+%%TODO, make this rule recursive.
+\AxiomC{$(T[], F, T)$}
+\RightLabel{Typing rule for an array}
+\UnaryInfC{$\vdash (T[], F, T) : T'[], T' \in Tree(T)$}
+\DisplayProof
+
+
+\AxiomC{}
+\RightLabel{WF rule for the heap}
+\UnaryInfC{$\forall (.., F, ..) \in \mathsf{im}(H), F(e) = a \wedge \type(e) = T \Rightarrow (a = null \vee H(a) : T) \vdash H$} 
+\caption{WF rule for the heap}
+
+
+\end{figure}
+
+\newcommand{\true}{\mathsf{tt}}
+\newcommand{\false}{\mathsf{ff}}
+
+\newcommand{\eval}{\rightsquigarrow}
+\begin{figure}
+
+\AxiomC{$V(x) = (v, t)  \mid x \in \Var$}
+\RightLabel{Var eval}
+\UnaryInfC{$H, \overline{T}, \langle V, \rho, x \rangle \eval  H, \overline{T}, \langle V, \rho, v \rangle $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H, \overline{T} \langle V, \rho, e \rangle \; \eval
+\; H', \overline{T}' \langle V',\rho, v \rangle $} 
+\RightLabel{Context eval 1}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, E[e]\rangle  \eval H' \overline{T}' \langle V', \rho, E[v] \rangle $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H, \overline{T} \langle V, \rho, e \rangle \; \eval
+\; H', \overline{T}' \langle V',\rho, \exception \rangle $} 
+\RightLabel{Context eval 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, E[e]\rangle  \eval H', \overline{T}' \langle V', \rho, \exception \rangle $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$V(x) = (a, c) \wedge H(a) = (d, F, \rho) \wedge F \downarrow_c(f) = v$}
+\RightLabel{Field eval 1}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, x.f \rangle \eval H, \overline{T} \langle V, T, v \rangle $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$V(x) = (\nul, c)$}
+\RightLabel{Field eval 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, x.f \rangle \eval H, \overline{T} \langle V, \rho, \nullException \rangle $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$V(x) = (a, c) \wedge H(a) = (d, F, \rho')$}
+\RightLabel{Field set 1}
+ERROR : False rule, we are not sure the field is c.
+\UnaryInfC{$ H, \overline{T}, \langle V, \rho, x.f = v \rangle  \eval H [a \rightarrow (C, F[(f, c) \rightarrow v], \rho')], \overline{T}, \langle V, \rho, \nul \rangle $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$V(x) = (\nul, t)$}
+\RightLabel{Field set 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, x.f = v \rangle \eval H, \overline{T} \langle V, \rho, \nullException \rangle  $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H, \overline{T} \langle V, \rho', x.m(\overline{v}) \rangle$}
+\AxiomC{$V(x) = (a, t) \wedge H(a) = (c, F, \rho) \wedge \methodmap(m) = .... \msig \{ e\}...$ }
+\noLine
+\UnaryInfC{$ \wedge (\synchronized(\methodmap(m)) \Rightarrow \rho=\rho') $}
+\RightLabel{Method eval}
+\BinaryInfC{$H, \overline{T} \langle V=(\this \mapsto (a, c), \overline{x} \mapsto \overline{v}), \rho, e \rangle \; \eval \; H', \overline{T}' (V', \rho, v)$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H, \overline{T} \langle V, \rho, x.m(\overline{v}) \rangle $}
+\AxiomC{$V(x) = a \wedge H(a) = (C, \rho', T) \wedge C(m) = \msig \{ e \} $}
+\noLine
+\UnaryInfC{$ \wedge (\synchronized(C(m)) \Rightarrow \rho=\rho') $}
+\RightLabel{Method eval 2}
+\BinaryInfC{$H, \overline{T} \langle V=(\this :  C, x_1 \rightarrow v_1,.., x_n \rightarrow v_n), \rho, e \rangle \; \eval \; H', \overline{T}' (V', \rho, \exception )$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$V(x) = \nul $}
+\RightLabel{Method eval 3}
+\UnaryInfC{$H, \overline{T} \langle V, T, x.m(\overline{v}) \rangle \; \eval \; H, \overline{T} \langle, V, T, \nullException \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H, \overline{T} \langle V, \rho, e_1 \rangle \, \eval \, H', \overline{T}' \langle V',\rho, v \rangle $}
+\AxiomC{$H', \overline{T}' \langle V'[ x \rightarrow v ], \rho, e_1 \rangle \; \eval  \; H'', \overline{T}'' \langle V'', \rho, v' \rangle $}
+\RightLabel{Composition}
+\BinaryInfC{$H, \overline{T} \langle V, \rho, \lettext x = e_1 \intext e_2 \rangle \; \eval \; H'', \overline{T}'' \langle V'', T'', v' \rangle  $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H,\overline{T} \langle V, \rho, e_1 \rangle \, \eval \, H', \overline{T}' \langle V',\rho, \exception \rangle$}
+\RightLabel{Composition 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, \lettext x = e_1 \intext e_2 \rangle \; \eval \; H', \overline{T}' \langle V', \rho,\exception  \rangle $}
+\DisplayProof
+\vspace{10pt}
+\end{figure}
+Given a method $\method$, we write $\synchronized(\method)$ for the result of the predicate $\synchronized$ that discriminate methods with the $\synchronized$ keywords.
+\begin{figure}
+
+\AxiomC{$H, \overline{T} \langle V, T, e_1 \rangle \, \eval \, H', \overline{T}' \langle V', T',v \rangle $}
+\AxiomC{$H', \overline{T} \langle V'[ x \rightarrow v ], \rho, e_1 \rangle \eval H'', \overline{T}'' \langle V'', \rho, \exception \rangle $}
+\RightLabel{Composition 3}
+\BinaryInfC{$H, \overline{T} \langle V, \rho, \lettext x = e_1 \in e_2 \rangle \; \eval \; H'', \overline{T}'' \langle V'', \rho, \exception \rangle $}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$ a \in \A$ fresh}
+\AxiomC{$F : \Fields(C) \rightarrow \Value$, st $\forall x \in \mathsf{Dom}(F). F(x) = \nul$}
+\RightLabel{new eval}
+\BinaryInfC{$H, \overline{T} \langle V, \rho, \new C() \rangle \; \eval \; H[a \rightarrow(C, F, \epsilon)], \overline{T} \langle V, \rho, a \rangle$ }
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$V(v) = (\nul, t'') \; \vee \; (V(v) = (a, t'') \wedge H(a) = (t', F, \rho) \wedge t \inherits t')$}
+\RightLabel{Cast eval 1}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, (t) v \rangle \; \eval \; H, \overline{T} \langle V[v \mapsto ((\nul \mid a), t)] , T, v \rangle$}
+\DisplayProof 
+\vspace{10pt}
+\\
+\AxiomC{$ V(v) = (a, t'') \wedge H(a) = (t', F, \rho) \wedge\neg (t \inherits t')$}
+\RightLabel{Cast eval 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, (t) v \rangle \; \eval \; H, \overline{T} \langle V, \rho, \castException \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$ a \in \A \wedge H(a) = (t', F, \rho') \wedge (\rho'= \rho \vee \rho' = \epsilon)$}
+\RightLabel{Lock eval 1}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, \lock a \rangle \; \eval \; H[a \rightarrow (t',F, \rho)], \overline{T} \langle V, \rho, \nul \rangle$}
+\DisplayProof
+\vspace{10pt}
+ \\
+ \AxiomC{}
+\RightLabel{Lock eval 2}
+\UnaryInfC{$H,\overline{T} \langle V, \rho, \lock \nul  \rangle \; \eval \; H, \overline{T} \langle V, \rho, \nullException \rangle$}
+ \DisplayProof
+ \vspace{10pt}
+\\ 
+\AxiomC{$ H(a) = (t, F,\rho') \wedge (\rho'= \rho \vee \rho' = \epsilon)$}
+\RightLabel{unlock eval 1}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, \unlock a \rangle \; \eval \; H[a \rightarrow (t,F, \epsilon)], \overline{T} \langle V, \rho, \nul \rangle$}
+\DisplayProof
+\vspace{10pt}
+ \\
+\AxiomC{}
+\RightLabel{unlock eval 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, \unlock \nul  \rangle \; \eval \; H, \overline{T} \langle V, \rho, \nullException \rangle$}
+ \DisplayProof
+ \vspace{10pt}
+\\ 
+\AxiomC{$a \in \A $ fresh}
+\RightLabel{new Array}
+\UnaryInfC{$ H,\overline{T} \langle V, \rho, \new t[l] \rangle \; \eval \; H[ a \rightarrow(t[], F:[i,l] \mapsto \nul, \epsilon)],\overline{T} \langle V, \rho, a \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H(a) = (t, F, \rho') \wedge F(i) = (v, t)$}
+\RightLabel{Array eval 1}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, a[i] \rangle \; \eval \; H, \overline{T} \langle V, \rho, v \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$ H(a) = (t, F, \rho') \wedge i \notin \mathsf{dom}(F)$}
+\RightLabel{Array eval 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, a[i] \rangle\; \eval \; H,\overline{T} \langle V, \rho, \ArrayException \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{}
+\RightLabel{Array eval 3}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, \nul[i] \rangle\; \eval \; H,\overline{T} \langle V, \rho, \nullException \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$H(a) = (t, F, \rho') \wedge i \in \mathsf{dom}(F)$}
+\RightLabel{Array update 1}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, a[i] = v \rangle \; \eval \; H[a \mapsto(t, F[i\mapsto v], \rho')], \overline{T} \langle V, \rho, \nul \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$ H(a) = (t, F, \rho') \wedge i \notin \mathsf{dom}(F)$}
+\RightLabel{Array update 2}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, a[i] = v \rangle\; \eval \; H,\overline{T} \langle V, \rho, \ArrayException \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{}
+\RightLabel{Array update 3}
+\UnaryInfC{$H, \overline{T} \langle V, \rho, \nul[i] = v \rangle\; \eval \; H,\overline{T} \langle V, \rho, \nullException \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$a \in \A $ fresh, $t : C$, $\rho'$ fresh}
+\AxiomC{$C(\mathsf{run}) = (\Unit)\Unit\{e \}$}
+\RightLabel{start thread}
+\BinaryInfC{$H, \overline{T}, \langle V, \rho, \start \; t() \rangle \; \eval \; H[a \rightarrow (C, F: \Fields(C) \mapsto \nul, \emptyset)], \overline{T} \langle V, \rho, a \rangle, \langle [\this \rightarrow a], \rho', e\rangle $}
+\DisplayProof
+\vspace{10pt}
+\end{figure}
+\begin{figure}
+\AxiomC{$ H(a) = (t'', F, \rho) \; \wedge \; b = \true \text{ if } (t'' \inherits t) \; \false \text{ otherwise }$}
+\RightLabel{instanceof 1}
+\UnaryInfC{$H, \overline{T}, \langle V, \rho, a\;  \instanceof \; t \rangle \eval H, \overline{T}, \langle V, \rho, b \rangle$} 
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{}
+\RightLabel{instanceof 2}
+\UnaryInfC{$H, \overline{T}, \langle V, \rho, \nul \; \instanceof \; t \eval H, \overline{T}, \false \rangle$} 
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{}
+\RightLabel{if true}
+\UnaryInfC{$H, \overline{T}, \langle V, \rho, \iftext \true \; \thentext e' \elsetext e'' \rangle \; \eval \; H, \overline{T}, \langle V, \rho , e'' \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{}
+\RightLabel{if false}
+\UnaryInfC{$H, \overline{T}, \langle V, \rho, \iftext \; \false \; \thentext e' \elsetext e'' \rangle \; \eval \; H, \overline{T}, \langle V, \rho, e'' \rangle$}
+\DisplayProof
+\vspace{10pt}
+\\
+\AxiomC{$b = \true \text{ if } (\pi_1 V(x) = \pi_1 V(y)) \; \false \text{ otherwise}$}
+\RightLabel{reference equality}
+\UnaryInfC{$H, \overline{T}, \langle V, \rho, x==y \rangle \; \eval \; H, \overline{T}, \langle, V,  b \rangle$}
+\DisplayProof
+
+\end{figure}
+
+\begin{figure}
+\AxiomC{$H, \overline{T}, T' \overline{T''}$}
+\RightLabel{Commutativity}
+\UnaryInfC{$H, \overline{T}, \overline{T''}, T'$}
+\DisplayProof
+\hspace{10pt}
+\AxiomC{$H, \overline{T}, \langle V, \rho, (v \mid \exception) \rangle$}
+\RightLabel{Thread end}
+\UnaryInfC{$\unlock(H, \rho), \overline{T}$} 
+\DisplayProof
+\vspace{10pt}
+
+$\unlock([], \rho) = [] \hspace{10pt} \unlock((a \mapsto (t, F, \rho').H, \rho) = [a \mapsto (t, F, \rho'[ \rho / \epsilon]).\unlock(H, \rho)$ 
+\caption{Thread calculus}
+\end{figure}
+
+We define contexts $E$ as follows:
+\begin{align*}
+E ::=  & \; 	\lettext x = \_ \; \intext e_2 \; \mid \; (t) \_ \; \mid \;  x.m( \overline{v}, \_, \overline{e}) \; \mid \\
+& x.f = \_ \; \mid \; \iftext \_  \; \thentext e \; \elsetext e' \;  \mid \; x[i] = \_
+\end{align*}
+
+
+
+Note, we can double lock on an object without creating problems.
+Similarly, we can unlock an unlocked object without raising exceptions.
+
+
+\begin{figure}
+\AxiomC{}
+\caption{Well formed rules for $\IdealJava$}
+\end{figure}
+
+
+\section{Target language}
+
+
+\begin{tabular}{ll}
+Expressions & $ e \: ::= x \; \mid \; x.\method(\overline{e}) \;  $  \\ & $ \mid \lettext(t)  x = e_1 \intext e_2 \; \mid \; \start{} \; t()$ \\ 
+& $ \mid \; \new{} \; C() \; \mid \; (t) e \; \mid \this$\\
+& $x \; \instanceof t \; \mid \; \iftext \; e \; \thentext e' \elsetext e'' \; \mid \; x ==y $
+\end{tabular}
+
+%\subsection{State transformation}
+%
+%Millr replaces every instruction in the bytecode that access or changes the state of an object with an appropriate method call. This transformation happens as follows. For each field $\field$ of a class, two methods are created $\getter$ and $\setter$, corresponding to getter and setter respectively. Each $\getField$ - $\setField$in the bytecode instruction is replaced with an appropriate method call.
+%\begin{tabular}{ll}
+%$x.f$ & $\rightarrowtail x.\getter_\field()$. \\
+%$x. f = e$ & $ \rightarrowtail x.\setter_\field( e)$
+%\end{tabular}
+%
+%\newcommand{\methodBis}{\mathsf{method}'}
+%Due to the semantics of java, one must be particularly careful in picking up name for the getter-setter methods. Indeed, if a class $A$ inherits another class $B$, and $A$ contains a field $\field$ with same name as another one in $\fieldBis$ in $B$, then $\field$ will \enquote{hide} $\fieldBis$. On the other hand, if $A$ has a method $\method$ with same name as a method $\methodBis$ from $B$ (and this method is visible from $A$), then $\method$ will override $\methodBis$. However, the semantics of overriding and hiding are different.
+%
+%For instance, let us consider classes A and B as follows.
+%\begin{lstlisting}
+%class A{
+% Object field = new Object();
+% 
+% Object getField(){
+% 	return field; 
+% }
+%}\
+%\end{lstlisting}
+%and
+%\begin{lstlisting}
+%class B extends A{
+%	Object field = new Object();
+%	
+%	Object getField(){
+%		return field;
+%	}
+%}
+%\end{lstlisting}
+%Then the output of the following code:
+%\begin{lstlisting}
+%A a = new B();
+%return a.field.equals(a.getField());
+%\end{lstlisting}
+%is false. Indeed, a is perceived of type A, and then the field that will be accessed will be the one of A. On the other hand, the method getField in A will be overriden, and hence getField() with return the field from B.
+%Therefore, we in order for the semantic to work, we need to consider two injective functions:
+%\begin{itemize}
+%\item $\mathsf{nameGetter}$ : (NameOfClass * NameOfField) $\rightarrow$ String.
+%\item $\mathsf{nameSetter}$ : (NameOfClass * NameOfField) $\rightarrow$ String
+%\end{itemize}
+%whose duty are self-explanatory.
+%
+%\subsection{Internal Lock access}
+%
+%Each object present in the JVM has an internal lock, that can be access either by calling synchonized methods, or with the instruction $\mathsf{synchronized}$. The $\mathsf{synchronized}\{ ... \} $ translates into bytecode by two instructions $\mathsf{monitorenter}$ and $\mathsf{monitorexit}$. We want to replace these instructions with methods call that will respectively acquire and release the internal lock of the object.
+%
+%\newcommand{\getLock}{$\mathsf{getLock}$}
+%\newcommand{\releaseLock}{$\mathsf{releaseLock}$}
+%\newcommand{\latchTread}{$\mathsf{latchThread}$}
+%\newcommand{\doneLatch}{$\mathsf{doneLatch}$}
+%Therefore, for each class we add two methods \getLock{} and \releaseLock. It is important that \getLock{} returns quickly while keeping the lock of the object held. \getLock{} will start a thread \latchTread that will acquire the lock of the object, while \releaseLock will end the thread. To each class we add a field \doneLatch{} of type CountDownLatch. A CountDownLatch initilized with \enquote{1} \enquote{serves as a simple on/off latch, or gate: all threads invoking await wait at the gate until it is opened by a thread invoking countDown().} \ref{javaspec}
+%
+%
+% The class \latchTread{} is defined as follows.
+%
+%\begin{lstlisting}
+%public class LatchThread extends Thread{  
+%  hasSyncMethods o;
+%  CountDownLatch signal;  
+%  public LatchThread(hasSyncMethods o,
+%          CountDownLatch signal){
+%    this.o = o;
+%    this.signal = signal;
+%  }    
+%  public void run(){
+%    o.getLock(signal);
+%  }    
+%}
+%\end{lstlisting}
+%The method for the \getLock{} is as follows.
+%\begin{lstlisting}
+%public void startLock(){
+%  try{
+%    CountDownLatch latch = 
+%        new CountDownLatch(1);
+%    Thread latchTread = 
+%       new latchTread(this, latch);
+%    latchTread.run();
+%    latch.await();
+%  }
+%  catch(InterruptedException ex){
+%    throw new RuntimeException(ex);
+%  }
+%}
+%\end{lstlisting}
+%
+%\begin{lstlisting}
+%public synchronized void 
+% getLock(CountDownLatch latch){
+%  try{
+%    latch.countDown();
+%    this.doneLatch = new CountDownLatch(1);
+%    this.doneLatch.await();
+%  }
+%  catch(InterruptedException ex){
+%    throw new RuntimeException(ex);
+%  }
+%}
+%\end{lstlisting}
+%
+%\begin{lstlisting}
+%public void releaseLock(){
+%  this.doneLatch.countDown();
+%}
+%\end{lstlisting}
+%
+%
+%
+% The code for the \getLock{} is as follows.
+%
+%\begin{lstlisting}
+%
+%\end{lstlisting}
+%
+%
+%\subsection{Array Transformation}
+%
+%We transform each array with an ArrayWrapper. An ArrayWrapper is a class that contains an array state, and access to this array is done through getters and setters methods, as specified in the following code. Creation of an array is done thanks to reflection through a static method, with as arguments the dimension of the array, as well as the class. for reasons explained in section{}. 
+%
+%\begin{lstlisting}
+%
+%class ArrayWrapper{
+%	
+%	public ArrayWrapper getNewArrayWrapper(Class<?> class, int args){
+%		..
+%	}
+%	
+%	Object[] array;
+%	
+%	public Object get(int i){
+%		return array[i];
+%	}
+%	
+%	public void set(int i, Object o){
+%		array[i] = o;
+%	}
+%
+%}
+%
+%\end{lstlisting}
+%
+%The transformation simply consists in replacing each creation of an array, or access through the appropriate method, followed by casting in the case of the get method. In the following, $\arr$ is an array of type $T[]$.
+%
+%\begin{tabular}{ll}
+%$ S \arr = \new{} T[n] $ & $\rightsquigarrow ArrayWrapper \; \arr = \;ArrawWrapper.getNewArrayWrapper(T, n)$ \\
+%$\arr[i] $ & $\rightsquigarrow (T) arr.get(i)$\\
+%$\arr[i] = a$ & $arr.set(i, a)$; \\
+%\end{tabular}
+%
+%
+%
+% Furthermore, as one can see, the ArrayWrapper does not remember the class of the original array: types are erased.  This leads us to make particular care for casting. We must hence create a particular method for cast, so that it results in equivalent behaviour at runtime. We do that in two steps. First, we add a $asArray$ to the $ArrayWrapper$ class that returns the original array.
+% 
+% \begin{lstlisting}
+%public Object[] asArray(){
+%	return internal ;
+% }
+% \end{lstlisting}
+% We then create this static method.
+% \begin{lstlisting}
+% public void cast(Object o, Class t){
+% 	if (o  instanceof ArrayWrapper){
+% 		 (t) ((ArrayWrapper) o).asArray();
+% 		 return;
+% 	}
+% 	(t) o;
+% }
+% \end{lstlisting}
+% 
+% Also, we replace the type of every field that are arrays to ArrayWrapper.
+% 
+% 
+% \begin{tabular}{ll}
+% $f : t $ & $  \rightsquigarrow  \begin{cases}f : \ArrayWrapper \text{ if } t \inherits \object[] \\ f : t \text{ otherwise } \end{cases}$.
+% \end{tabular}
+%
+% \section{Partial Transformation}
+% 
+% A major challenge is that these transformation might only be applied to a part of the program, and not the whole of it. Typically, the Java API is not transformed. We hence need to make sure that the transformed program interacts well with its environment. The part that is not being transformed cannot been dependent on the part that is being transformed. 
+%\newcommand{\milledPart}{A}
+%\newcommand{\Api}{B}
+%We call the part of the program being transformed \milledPart and the one not being transformed \Api.
+% 
+%A major problem arises with the array transformations, where the types are being changed. 
+%
+%\subsection{Synchronization}
+%
+%If there is no way to make sure that the object that is being synchronized on is \milledPart, then we simply leave the code unchanged. To determine that we carry static analysis on the code to determine what is the minimal type the object can be. If it is of a class / interface from $\Api$, then we leave the code unchanged. On the other hand, if it is from a class / interface of $\milledPart$, or, an array, then we can apply the transformation as described before.
+%
+%\subsection{Field Access}
+
+
+
+
+
+
+\end{document}
+

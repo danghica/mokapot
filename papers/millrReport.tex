@@ -1,0 +1,376 @@
+\documentclass[a4paper, 11pt, english]{article}
+\author{Thomas Cuvillier}
+\usepackage{amsmath, amssymb, enumerate, hyperref}
+\usepackage[style=alphabetic]{biblatex}
+\usepackage[a4paper]{geometry}
+\usepackage[all]{xy}
+\usepackage{listings}
+
+
+
+\bibliography{researchproposal}{}
+%\newtheorem{thm}{Theorem}
+%\newtheorem*{lem}{Lemma}
+%\newtheorem*{clm}{Claim}
+%\newtheorem*{conj}{Conjecture}
+%\newtheorem*{cor}{Corollary}
+%\newtheorem*{prop}{Proposition}
+%\newtheorem*{defn}{Definition}
+%\newtheorem*{rem}{Remark}
+\title{Millr}
+
+
+\newcommand{\field}{\mathsf{f}}
+\newcommand{\getter}{get}
+\newcommand{\setter}{set}
+\newcommand{\getField}{\mathsf{getField}}
+\newcommand{\setField}{\mathsf{putField}}
+\newcommand{\method}{method}
+\newcommand{\methodBis}{method'}
+\newcommand{\arr}{\mathsf{arr}}
+\newcommand{\new}{\mathsf{new}}
+\newcommand{\inherits}{\triangleleft}
+\newcommand{\obj}{\mathsf{Object}}
+\newcommand{\ArrayWrapper}{\mathsf{ArrayWrapper}}
+%\newcommand{\object}{\mathsf{Object}}
+\begin{document}
+
+\maketitle
+
+\section{Motivations}
+
+Speak about mokapot. Goal 
+\begin{itemize}
+\item to make every operations on object a method Call 
+\item All classes created at compile time.
+\item Allow creations of standin (all methods overridable)
+\item Hide the use of standin instead of original objects.
+\end{itemize}
+
+\section{Millr in the ideal world}
+  
+\subsection{Field access}
+
+\textit{
+Transforming direct field access thanks to getter and setter.
+Talk about the difference between hiding and and overriding, and what it implies for the names of the method.}
+
+
+Millr replaces every instruction in the bytecode that access or changes the state of an object with an appropriate method call. This transformation happens as follows. For each field $\field$ of a class, two methods are created $\getter$ and $\setter$, corresponding to getter and setter respectively. Each $\getField$ - $\setField$in the bytecode instruction is replaced with an appropriate method call.
+\begin{tabular}{ll}
+$x.f$ & $\rightarrowtail x.\getter_\field()$. \\
+$x. f = e$ & $ \rightarrowtail x.\setter_\field( e)$
+\end{tabular}
+
+
+Due to the semantics of java, one must be particularly careful in picking up name for the getter-setter methods. Indeed, if a class $A$ inherits another class $B$, and $A$ contains a field $\field$ with same name as another one in $\field'$ in $B$, then $\field$ will \enquote{hide} $\field'$. On the other hand, if $A$ has a method $\method$ with same name as a method $\methodBis$ from $B$ (and this method is visible from $A$), then $\method$ will override $\methodBis$. However, the semantics of overriding and hiding are different.
+
+For instance, let us consider classes A and B as follows.
+\begin{lstlisting}
+class A{
+   Object field = new Object();
+   Object getField(){
+ 	return field; 
+ }
+}
+\end{lstlisting}
+and
+\begin{lstlisting}
+class B extends A{
+	Object field = new Object();
+	Object getField(){
+		return field;
+	}
+}
+\end{lstlisting}
+Then the output of the following code:
+\begin{lstlisting}
+A a = new B();
+return a.field.equals(a.getField());
+\end{lstlisting}
+is false. Indeed, a is perceived of type A, and then the field that will be accessed will be the one of A. On the other hand, the method getField in A will be overriden, and hence getField() with return the field from B.
+Therefore, we in order for the semantic to work, we need to consider two injective functions:
+\begin{itemize}
+\item $\mathsf{nameGetter}$ : (NameOfClass * NameOfField) $\rightarrow$ String.
+\item $\mathsf{nameSetter}$ : (NameOfClass * NameOfField) $\rightarrow$ String
+\end{itemize}
+whose duty are self-explanatory.
+
+\subsection{Array access}
+
+We transform each array with an ArrayWrapper. An ArrayWrapper is a class that contains an array state, and access to this array is done through getters and setters methods, as specified in the following code. Creation of an array can be done thanks to reflection, with as arguments the dimension of the array, as well as the class. A naive ArrayWrapper class could be like this.
+
+\begin{lstlisting}
+
+class ArrayWrapper<T>{
+	
+	public ArrayWrapper(Class<? extends T> class, int args){
+		 array = reflect.
+	}
+	
+	T[] array;
+	
+	public T get(int i){
+		return array[i];
+	}
+	
+	public void set(int i, T o){
+		array[i] = o;
+	}
+
+}
+\end{lstlisting}
+
+
+However, we have to take account two constraints:
+\begin{enumerate}
+\item Multi-dimensional arrays.
+\item The ability to return the internal array, with "original types".
+\end{enumerate}
+
+These two constraints forces us to abandon generic types. Indeed, an array of type $[[Object$, would now become of type $ArrayWrapper<ArrayWrapper<Object>>$, hence obtaining an internal array of type $[ArrayWrapper<Object>$, whereas we would like to interface with an internal array of type $[[Object$. 
+
+Therefore, we need to remove to remove generics, and have more sophisticated getter and setters to take care of possible ArrayWrapper types. We need two abilities:
+\begin{enumerate}
+\item to transform an array into an arrayWrapper.
+\item That this transformation respects reference equality.
+\end{enumerate}
+
+\begin{lstlisting}
+
+class ArrayWrapper{
+
+	private static Map<Object[], ArrayWrapper> fromArrayToWrapper
+	 = new ConcurrentHashMap<>();
+	
+	public ArrayWrapper(Class<? extends T> class, int args){
+		 array = reflect.
+		 map.put(array, this);		 
+	}
+	
+	private ArrayWrapper(Object[] array){
+		this.array = array;
+		map.put(array, this);
+	}
+	
+	Object[] array;
+	
+	private static fromArrayToWrapper(Object[] array){
+		if (map.contains(array)){
+			return map.get(array);		
+		}
+		else{
+			ArrayWrapper wrapper = new ArrayWrapper(array);
+			return wrapper:
+		}
+	}
+	
+	public Object get(int i){
+		if (array[i]) == null{
+			return null;	
+		}
+		if array[i].getClass().isArray(){
+			return fromArrayToWrapper(array[i)); 		
+		}
+		else{
+			return array[i];
+		}
+		
+	}
+	
+	public void set(int i, Object o){
+		if (o instanceof ArrayWrapper){
+			array[i]=o.array;		
+		}
+		else{
+			array[i] = o;
+		}
+	}
+
+}
+\end{lstlisting}
+
+
+Some problems arise with the above class, the first being that "this" is leaked in the constructor. The second is that storing everything in a static map prevents garbage collection, leading to a memory leak.
+
+The first problem is solved by making the constructors private, and calling static factory methods instead. Those factory methods will first construct the object, and then place it in the Map. The second is solved by using a Map with weak references.
+
+The fromArrayToWrapper map is now defined as of type:
+\begin{lstlisting}
+ WeakHashMap<Object[], WeakReference<ObjectArrayWrapper>> 
+\end{lstlisting}
+
+and the factory method is designed like this:
+\begin{lstlisting}
+    public final static ObjectArrayWrapper
+     getObjectArrayWrapper(int[] dims, Class componentType) {
+        ArrayWrapper wrap = new ArrayWrapper(dims, componentType);
+        MAP.put(wrap.array, new WeakReference<>(wrap));
+        return wrap;
+    }
+\end{lstlisting}
+
+The transformation simply consists in replacing each creation of an array, or access through the appropriate method, followed by casting in the case of the get method. In the following, $\arr$ is an array of type $T[]$.
+
+\begin{tabular}{ll}
+$ S \arr = \new{} T[n] $ & $\rightsquigarrow ArrayWrapper \; \arr = \;ArrawWrapper.getNewArrayWrapper(T, n)$ \\
+$\arr[i] $ & $\rightsquigarrow (T) arr.get(i)$\\
+$\arr[i] = a$ & $arr.set(i, a)$; \\
+\end{tabular}
+
+
+
+ Furthermore, as one can see, the ArrayWrapper does not remember the class of the original array: types are erased.  This leads us to make particular care for casting. We must hence create a particular method for cast, so that it results in equivalent behaviour at runtime. We do that in two steps. First, we add a $asArray$ to the $ArrayWrapper$ class that returns the original array.
+ 
+ \begin{lstlisting}
+public Object[] asArray(){
+	return internal ;
+ }
+ \end{lstlisting}
+ We then create this static method.
+ \begin{lstlisting}
+ public void cast(Object o, Class t){
+ 	if (o  instanceof ArrayWrapper){
+ 		 (t) ((ArrayWrapper) o).asArray();
+ 		 return;
+ 	}
+ 	(t) o;
+ }
+ \end{lstlisting}
+ 
+ Also, we replace the type of every field that are arrays to ArrayWrapper.
+ 
+ 
+ \begin{tabular}{ll}
+ $f : t $ & $ $.
+ \end{tabular}
+$ \rightsquigarrow 
+  \begin{cases}f : \ArrayWrapper \text{ if } t \inherits \obj \\
+   f : t \text{ otherwise} \end{cases}$
+\subsection{Synchronization}
+\textit{
+Transformation of the synchronized(o){ } into call to two methods
+lock(o) and unlock(o).}
+
+Each object present in the JVM has an internal lock, that can be access either by calling synchonized methods, or with the instruction $\mathsf{synchronized}$. The $\mathsf{synchronized}\{ ... \} $ translates into bytecode by two instructions $\mathsf{monitorenter}$ and $\mathsf{monitorexit}$. We want to replace these instructions with methods call that will respectively acquire and release the internal lock of the object.
+
+\newcommand{\getLock}{$\mathsf{getLock}$}
+\newcommand{\releaseLock}{$\mathsf{releaseLock}$}
+\newcommand{\latchTread}{$\mathsf{latchThread}$}
+\newcommand{\doneLatch}{$\mathsf{doneLatch}$}
+Therefore, for each class we add two methods \getLock{} and \releaseLock. It is important that \getLock{} returns quickly while keeping the lock of the object held. \getLock{} will start a thread \latchTread that will acquire the lock of the object, while \releaseLock will end the thread. To each class we add a field \doneLatch{} of type CountDownLatch. A CountDownLatch initilized with 1 \enquote{serves as a simple on/off latch, or gate: all threads invoking await wait at the gate until it is opened by a thread invoking countDown().} \ref{javaspec}
+
+
+ The class \latchTread{} is defined as follows.
+
+\begin{lstlisting}
+public class LatchThread extends Thread{  
+  hasSyncMethods o;
+  CountDownLatch signal;  
+  public LatchThread(hasSyncMethods o,
+          CountDownLatch signal){
+    this.o = o;
+    this.signal = signal;
+  }    
+  public void run(){
+    o.getLock(signal);
+  }    
+}
+\end{lstlisting}
+The method for the \getLock{} is as follows.
+\begin{lstlisting}
+public void startLock(){
+  try{
+    CountDownLatch latch = 
+        new CountDownLatch(1);
+    Thread latchTread = 
+       new latchTread(this, latch);
+    latchTread.run();
+    latch.await();
+  }
+  catch(InterruptedException ex){
+    throw new RuntimeException(ex);
+  }
+}
+\end{lstlisting}
+
+
+
+\begin{lstlisting}
+public void releaseLock(){
+  this.doneLatch.countDown();
+}
+\end{lstlisting}
+
+
+
+ The code for the \getLock{} is as follows.
+
+
+
+\begin{lstlisting}
+public synchronized void 
+ getLock(CountDownLatch latch){
+  try{
+    latch.countDown();
+    this.doneLatch = new CountDownLatch(1);
+    this.doneLatch.await();
+  }
+  catch(InterruptedException ex){
+    throw new RuntimeException(ex);
+  }
+}
+\end{lstlisting}
+
+
+
+\subsection{Introspection modifications}
+
+In the case where mokapot is used to create a remote object,
+\begin{lstlisting}
+$A object = communicator.runRemotely(-> new A());
+\end{lstlisting}
+mokapot will, in most cases, not return an object of type $A$, but of a different type castable to $A$. Meaning that, in this case $object.getClass().equals(A.class)$ will evaluate to false, which is an unexpected behaviour. Millr fixes this issue by replacing the $getClass()$ method. Mokapot possesses an internal public static method that allows it to detect if an object acts as a proxy for an object of another class, and produces the original class.
+Therefore, every $getClass()$ method is replaced into a static call to this method.
+
+\begin{tabular}
+$o.getClass() $ & $\rightsquigarrow mokapot.getClass(o)$
+\end{tabular} 
+
+
+
+
+
+\subsection{Visibility modifications}
+
+In order for mokapot to put a non-copiable object remotely, it needs to create locally a standin, that will redirect local calls to the remote object. If the original object was of class $A$, mokapot will create a local object of class $A'$ extends $A$. This one will need to overrides every methods that the original object has. In particular, this includes method that may not visible from $A$, because they belong in classes that $A$ overrides and have private / package-private visibilities.
+
+-Remove final modifiers.\\
+-Package-private -> protected\\
+-Private -> protected with cases analysis.
+
+\subsection{Lambdas removal}
+->RetroLambda transformation.
+
+\section{Making millr works with non-milled dependencies}
+
+
+\subsection{Field access}
+If a Class A extends some class that is non milled getters are created for the fields inherited by the class. Local analysis is carried to know if the objects in the program subclass A and call to getters / setter can be used. 
+
+\subsection{Array}
+Arrays pose problems because of type modification.
+1) Mechanisms to cope with classes / interface inheritances.
+2) Mechanisms to cope with method calls to methods belonging outside the milled programs.
+3)Discussion about generics.
+
+\subsection{Visibility and possible overriding issues}
+-> Detection at millr time.
+
+
+
+  
+\printbibliography
+
+
+  \end{document} 
